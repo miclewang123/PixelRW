@@ -1,6 +1,7 @@
 # share data between 2 OS without network. 
-  the 2 OS using the same display.
+  ### The 2 OS using the same display.
   
 # functions
-  copy file from each other;
-  copy/paste from each other;
+ ### copy file from each other;
+ ### copy/paste from each other;
+
