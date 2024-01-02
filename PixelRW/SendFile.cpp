@@ -8,9 +8,8 @@ CSendFile::CSendFile(CPixelRWDlg* dlg, CRect& rect) :CBase(dlg) {
 	ZeroMemory(m_pBuf, m_nBufSize);
 
 	EmptyClipboard();
-
-	TCHAR tchBuf[100];
-	_stprintf_s(tchBuf, 100, _T("RECT Left top, right bottom %d %d %d %d\n"), m_rect.left, m_rect.top, m_rect.right, m_rect.bottom);
+	TCHAR tchBuf[200];
+	_stprintf_s(tchBuf, 200, _T("RECT Left top, right bottom %d %d %d %d\n"), m_rect.left, m_rect.top, m_rect.right, m_rect.bottom);
 	m_dlg->Log(tchBuf);
 
 	m_desktop_ctx.hWnd = ::GetDesktopWindow();
@@ -30,7 +29,6 @@ CSendFile::~CSendFile()
 void CSendFile::InitDC()
 {
 	DeinitDC();
-
 	m_desktop_ctx.hdc = ::GetDC(m_desktop_ctx.hWnd);
 	m_desktop_ctx.hdcMem = ::CreateCompatibleDC(m_desktop_ctx.hdc);
 }
@@ -107,7 +105,6 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 						ret = 0;
 						break;
 					}
-
 					ret1 = IsDataWritable(RW_WAIT_TIMEOUT);
 					if (ret1 == 0)
 					{

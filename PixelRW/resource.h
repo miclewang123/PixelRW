@@ -15,17 +15,13 @@
 #define IDC_EDIT_HEIGHT                 1006
 #define IDC_EDIT_FILE_RECEIVE           1007
 #define IDC_EDIT_FILE_SEND              1008
-#define IDC_EDIT_LOG                    1009
-#define IDC_EDIT_COLOR_SET              1009
 #define IDC_BTN_SEND_COPY               1009
 #define IDC_LIST_LOG                    1010
 #define ID_BTN_GET                      1011
 #define IDC_EDIT_X2                     1012
 #define IDC_EDIT_Y2                     1013
-#define IDC_CHECK1                      1014
 #define IDC_CHECK_SEND                  1014
 #define IDC_STATIC_SPEED                1015
-#define IDC_BTN_RECEIVE2                1016
 #define IDC_BTN_RECEIVE_COPY            1016
 
 // Next default values for new objects

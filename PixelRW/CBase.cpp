@@ -39,6 +39,7 @@ bool CBase::EmptyClipboard() const
 	{
 		::EmptyClipboard();
 		::CloseClipboard();
+
 		ret = true;
 		m_dlg->Log(_T("EmptyClipboard"));
 	}

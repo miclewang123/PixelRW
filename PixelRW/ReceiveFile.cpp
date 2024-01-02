@@ -314,11 +314,11 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 			CFile file;
 			CString strFileName;
 
-			if (pctszFileName) 
+			if (pctszFileName && _tcslen(pctszFileName) > 0) 
 				strFileName = pctszFileName;
 			else
 			{
-				strFileName = "d:";
+				strFileName = "c:";
 				TCHAR *ret = _tcsrchr(file_info.filename, _T('\\'));
 				strFileName += ret;
 			}
@@ -390,14 +390,13 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 					m_dlg->Log(_T("ReceiveFile remain:%lldKB, timeout!"), nRemain / 1024);
 					ret = -1;
 				}
-
+				file.Close();
 			}
 			else
 			{
 				ret = -1;
 				m_dlg->Log(_T("Open Receive File: %s failed."), pctszFileName);
 			}
-			file.Close();
 		}
 		else
 		{

@@ -134,7 +134,7 @@ void CPixelRWDlg::OnBnClickedBtnSend()
 	rc.top = GetDlgItemInt(IDC_EDIT_Y);
 	rc.right = rc.left + GetDlgItemInt(IDC_EDIT_WIDTH);
 	rc.bottom = rc.top + GetDlgItemInt(IDC_EDIT_HEIGHT);
-
+	
 	CSendFile sendFile(this, rc);
 	CString strFile;
 	GetDlgItemText(IDC_EDIT_FILE_SEND, strFile);
@@ -165,7 +165,7 @@ void CPixelRWDlg::OnBnClickedBtnReceive()
 
 	CString strFileName;
 	GetDlgItemText(IDC_EDIT_FILE_RECEIVE, strFileName);
-	int ret = recvFile.ReceiveFile(strFileName.GetLength() > 0? strFileName : NULL);
+	int ret = recvFile.ReceiveFile(strFileName);
 
 	if (ret == 0)Log(_T("receive succeed"));
 	else Log(_T("receive failed"));
@@ -179,7 +179,7 @@ void CPixelRWDlg::OnBnClickedBtnReceive()
 void CPixelRWDlg::OnBnClickedBtnSendCopy()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	CString strFileName = _T("D:\\copy.txt");
+	CString strFileName = _T("C:\\copy.txt");
 	SetDlgItemText(IDC_EDIT_FILE_SEND, strFileName);
 	
 	CFile file;
@@ -200,7 +200,7 @@ void CPixelRWDlg::OnBnClickedBtnSendCopy()
 void CPixelRWDlg::OnBnClickedBtnReceiveCopy()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	CString strFileName = _T("D:\\copy.txt");
+	CString strFileName = _T("C:\\copy.txt");
 	SetDlgItemText(IDC_EDIT_FILE_RECEIVE, strFileName);
 
 	OnBnClickedBtnReceive();
@@ -236,8 +236,10 @@ void CPixelRWDlg::Log(LPCTSTR strFormat, ...)
 	time_t t = time(NULL);
 	CString str;
 	str.Format(_T("%lld  %s\n"), t, buf);
+	
 	m_list->InsertString(0, str);
-	m_log_file.WriteString(str);
+	
+	if((HANDLE)m_log_file) m_log_file.WriteString(str);
 
 	static int nMaxStrLen = 0;
 	if (nMaxStrLen < str.GetLength())
@@ -252,6 +254,7 @@ void CPixelRWDlg::Log(LPCTSTR strFormat, ...)
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+
 	delete[] buf;
 }
 
