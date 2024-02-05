@@ -20,8 +20,8 @@ CPixelRWDlg::CPixelRWDlg(CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_list = NULL;
-	if(!m_log_file.Open(_T("d:\\log.txt"), CFile::modeCreate | CFile::modeWrite | CFile::typeText))
-		m_log_file.Open(_T("d:\\log1.txt"), CFile::modeCreate | CFile::modeWrite | CFile::typeText);
+	//if(!m_log_file.Open(_T("d:\\log.txt"), CFile::modeCreate | CFile::modeWrite | CFile::typeText))
+	//	m_log_file.Open(_T("d:\\log1.txt"), CFile::modeCreate | CFile::modeWrite | CFile::typeText);
 	
 	m_bAbort = FALSE;
 	m_bRunning = FALSE;
@@ -70,13 +70,10 @@ BOOL CPixelRWDlg::OnInitDialog()
 
 	m_list = (CListBox*)GetDlgItem(IDC_LIST_LOG);
 
-	
 	CDC* pDC = m_list->GetDC();
-	//SIZE size = pDC->GetTextExtent(_T("llllll"), 2);
 	TEXTMETRIC tm;
 	pDC->GetTextMetrics(&tm);
 	m_nCharWidth = tm.tmMaxCharWidth;
-	//m_nCharWidth = size.cx + 1;
 	m_list->ReleaseDC(pDC);
 	
 	m_bAbort = FALSE;
@@ -179,7 +176,7 @@ void CPixelRWDlg::OnBnClickedBtnReceive()
 void CPixelRWDlg::OnBnClickedBtnSendCopy()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	CString strFileName = _T("C:\\copy.txt");
+	CString strFileName = _T("D:\\copy.txt");
 	SetDlgItemText(IDC_EDIT_FILE_SEND, strFileName);
 	
 	CFile file;
@@ -189,7 +186,7 @@ void CPixelRWDlg::OnBnClickedBtnSendCopy()
 		TCHAR* buf = new TCHAR[CLIPBOARD_BUFFER_SIZE];
 		base.GetTextFromClipboard(buf, CLIPBOARD_BUFFER_SIZE);
 
-		file.Write(buf, (_tcslen(buf) + 1) * sizeof(TCHAR));
+		file.Write(buf, (UINT)((_tcslen(buf) + 1) * sizeof(TCHAR)));
 		delete[] buf;
 		file.Close();
 
@@ -200,7 +197,7 @@ void CPixelRWDlg::OnBnClickedBtnSendCopy()
 void CPixelRWDlg::OnBnClickedBtnReceiveCopy()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	CString strFileName = _T("C:\\copy.txt");
+	CString strFileName = _T("D:\\copy.txt");
 	SetDlgItemText(IDC_EDIT_FILE_RECEIVE, strFileName);
 
 	OnBnClickedBtnReceive();
@@ -239,7 +236,7 @@ void CPixelRWDlg::Log(LPCTSTR strFormat, ...)
 	
 	m_list->InsertString(0, str);
 	
-	if((HANDLE)m_log_file) m_log_file.WriteString(str);
+	//if((HANDLE)m_log_file) m_log_file.WriteString(str);
 
 	static int nMaxStrLen = 0;
 	if (nMaxStrLen < str.GetLength())
@@ -422,11 +419,6 @@ void CPixelRWDlg::OnBnClickedBtnTest()
 	m_bRunning = TRUE;
 
 	CDC *dcSrc = GetDesktopWindow()->GetWindowDC();
-
-	//CWnd wnd;
-	//wnd.Attach((HWND)0x0000000000080A70);
-	//CDC* dcSrc = wnd.GetWindowDC();
-
 	CDC *dcDst = GetWindowDC();
 
 	CRect rc;
@@ -446,8 +438,6 @@ void CPixelRWDlg::OnBnClickedBtnTest()
 
 	dcSrc->DeleteDC();
 	dcDst->DeleteDC();
-	//wnd.Detach();
-
 
 	CDC* dc_screen = GetDesktopWindow()->GetWindowDC();
 	COLORREF c;
@@ -493,7 +483,7 @@ void CPixelRWDlg::OnBnClickedCancel()
 	// TODO: 在此添加控件通知处理程序代码
 	m_bAbort = TRUE;
 	if (m_bRunning) return;
-	m_log_file.Close();
+	//m_log_file.Close();
 	
 	CDialogEx::OnCancel();
 }

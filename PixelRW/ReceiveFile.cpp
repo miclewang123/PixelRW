@@ -258,7 +258,7 @@ bool CReceiveFile::Connect()
 		m_nBufSize = m_rect.Width() * m_rect.Height() * 4;
 		m_pBuf = new BYTE[m_nBufSize];
 
-		Reply(REPLY_CONTINUE);
+		Reply(REPLY_CONTINUE, -1);
 		m_dlg->Log(_T("find Rect Left top, right bottom %d %d %d %d\n"), m_rect.left, m_rect.top, m_rect.right, m_rect.bottom);
 		if (IsDataReadable(CONNECTION_WAIT_TIMEOUT, -1) == 0)
 		{
@@ -271,14 +271,6 @@ bool CReceiveFile::Connect()
 	}
 	else
 		m_dlg->Log(_T("Find range error!"));
-
-
-	if(bConn)
-		m_dlg->Log(_T("connected."));
-	else
-	{
-		m_dlg->Log(_T("connected failed."));
-	}
 
 	return bConn;
 }
@@ -300,14 +292,14 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 
 	if (Connect())
 	{
+		m_dlg->Log(_T("connected."));
 		m_dlg->Log(_T("Begin save file:%s"), pctszFileName);
 
 		file_info_t file_info;
 		if (GetFileInfo(&file_info) == 0)
 		{
-			UINT nRetry = 1;
 			uint64_t nFileChecksum = 0;
-			uint32_t nLastId = 0;
+			uint32_t nId = 0;
 			int64_t nRemain = file_info.filesize;
 			m_dlg->Log(_T("Receive file:%s, File size:%lld, check sum:%lld."), file_info.filename, file_info.filesize, file_info.checksum);
 
@@ -318,19 +310,23 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 				strFileName = pctszFileName;
 			else
 			{
-				strFileName = "c:";
+				strFileName = _T("D:");
 				TCHAR *ret = _tcsrchr(file_info.filename, _T('\\'));
 				strFileName += ret;
 			}
 
 			if (file.Open(strFileName, CFile::modeCreate | CFile::modeWrite))
 			{	
-				Reply(REPLY_CONTINUE);
-				do
+				do 
 				{
-					if (m_dlg->IsAbort()) break;
+					if (m_dlg->IsAbort())
+					{
+						ret = -1;
+						break;
+					}
 
-					ret = IsDataReadable(RW_WAIT_TIMEOUT, nLastId);
+					Reply(REPLY_CONTINUE, nId);
+					ret = IsDataReadable(RW_WAIT_TIMEOUT, nId);
 					if (ret == 0)
 					{
 						frame_header_t* fh = (frame_header_t*)m_pBuf;
@@ -342,7 +338,6 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						oldTickcount = GetTickCount64();
 						m_dlg->DisplaySpeed(ch);
 
-						nRetry = 0;
 						file.Write(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
 						nRemain -= fh->nDataSize;
 
@@ -350,7 +345,6 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						if (nRemain == 0)
 						{
 							m_dlg->Log(_T("ReceiveFile completed."));
-							Reply(REPLY_CONTINUE);
 							break;
 						}
 						else if (nRemain < 0)
@@ -361,22 +355,10 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 							break;
 						}
 						else
-						{
-							nLastId++;
-							Reply(REPLY_CONTINUE);
-						}
+							nId++;
 					}
 					else
-					{
-						if (nRetry > MAX_RETRY_TIMES)
-						{
-							ret = -1;
-							m_dlg->Log(_T("ReceiveFile reach max retry times"));
-							break;
-						}
-						nRetry++;
-						Reply(REPLY_RETRY);
-					}
+						break;
 				} while (true);
 
 				if (nFileChecksum != file_info.checksum)
@@ -406,22 +388,26 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 		Disconnect();
 	}
 	else
+	{
+		m_dlg->Log(_T("Connect error!"));
 		ret = -1;
+	}
+
 	return ret;
 }
 
-int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nLastId)
+int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId)
 {
 	int ret = RET_TIMEOUT;
 	time_t oldTime = time(NULL);
 
 	frame_header_t *fh = (frame_header_t*)m_pBuf;
-	m_dlg->Log(_T("IsDataReadable begin, fh.id:%d"), fh->nId);
+	//m_dlg->Log(_T("IsDataReadable begin, fh.id:%d"), nId);
 	while ((time(NULL) - oldTime) < timeout)
 	{
 		GetRGBDataFromScreenRect();
 		fh = (frame_header_t*)m_pBuf;
-		if (fh->nId == nLastId + 1)
+		if (fh->nId == nId)
 		{
 			m_dlg->Log(_T("fh id:%d, DataSize:%d, CheckSum:%d"), fh->nId, fh->nDataSize, fh->nCheckSum);
 			uint64_t nCalFrameCheckSum = fh->nDataSize > (m_nBufSize - sizeof(frame_header_t)) ? 0 : CalCheckSum(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
@@ -438,12 +424,10 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nLastId)
 				continue;
 			}
 		}
-		else
-			;// m_dlg->Log(_T("different id, lastId:%d, fh id:%d, DataSize:%d, CheckSum:%d"), nLastId, fh->nId, fh->nDataSize, fh->nCheckSum);
-
+		
 		Sleep(50);
 	};
-	m_dlg->Log(_T("IsDataReadable end, fh.id:%d"), fh->nId);
+	//m_dlg->Log(_T("IsDataReadable end, fh.id:%d"), nId);
 
 	return ret;
 }
@@ -552,8 +536,11 @@ int CReceiveFile::GetRGBDataFromScreenRect(uint32_t nx, uint32_t ny, uint32_t nW
 	return ret;
 }
 
-void CReceiveFile::Reply(LPCTSTR pctszReply) const
+void CReceiveFile::Reply(LPCTSTR pctszReply, int nId) const
 {
-	CopyToClipboard(pctszReply);
-	m_dlg->Log(_T("reply %s to send"), pctszReply);
+	TCHAR tchTmp[20];
+	_stprintf_s(tchTmp, 20, _T("%s%d"), pctszReply, nId);
+
+	CopyToClipboard(tchTmp);
+	m_dlg->Log(_T("reply %s to send"), tchTmp);
 }

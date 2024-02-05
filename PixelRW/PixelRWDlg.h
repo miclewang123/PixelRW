@@ -26,7 +26,7 @@ protected:
 	UINT m_nCharWidth;
 	BOOL m_bAbort;
 	BOOL m_bRunning;
-	CStdioFile m_log_file;
+	//CStdioFile m_log_file;
 
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();

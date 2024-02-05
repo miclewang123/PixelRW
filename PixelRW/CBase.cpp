@@ -46,7 +46,7 @@ bool CBase::EmptyClipboard() const
 	return ret;
 }
 
-bool CBase::GetTextFromClipboard(LPTSTR ptszBuf, size_t nBufSize, BOOL bEmptyClipboard) const
+bool CBase::GetTextFromClipboard(LPTSTR ptszBuf, size_t nBufSize) const
 {
 	bool ret = false;
 
@@ -59,17 +59,11 @@ bool CBase::GetTextFromClipboard(LPTSTR ptszBuf, size_t nBufSize, BOOL bEmptyCli
 			if (NULL != hBuf)
 			{
 				LPTSTR str = (LPTSTR)::GlobalLock(hBuf);
-				if (NULL != str && _tcslen(str) > 0)
+				if (str && _tcslen(str) > 0)
 				{
 					_tcscpy_s(ptszBuf, nBufSize, str);
 					::GlobalUnlock(hBuf);
 					ret = true;
-				}
-
-				if (ret && bEmptyClipboard)
-				{
-					m_dlg->Log(_T("EmptyClipboard A"));
-					::EmptyClipboard();
 				}
 			}
 			::CloseClipboard();

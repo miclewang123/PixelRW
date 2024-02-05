@@ -49,18 +49,17 @@ void CSendFile::DeinitDC()
 
 int CSendFile::SendFile(LPCTSTR pctszFileName)
 {
-	int ret = -1;
+	int ret = 0;
+	int32_t nId = -1;
 
 	FillRectRed();
-	if (IsDataWritable(CONNECTION_WAIT_TIMEOUT) == 0)
+	if (IsDataWritable(CONNECTION_WAIT_TIMEOUT, nId) == 0)
 	{
 		CFile file;
 		m_dlg->Log(_T("before file open"));
 		if (file.Open(pctszFileName, CFile::modeRead))
 		{
 			uint64_t nRemainder = 0;
-			uint32_t nId = 0;
-
 			// send file size(8Bytes), checksum value(8Bytes) and file name, and make the last line red.
 			file_info_t file_info = { 0 };
 
@@ -68,7 +67,7 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 			file_info.checksum = GetFileCheckSum(&file);
 			_tcscpy_s(file_info.filename, MAX_PATH, pctszFileName);
 
-			file_info.fh.nId = nId++;
+			file_info.fh.nId = nId;
 			file_info.fh.nDataSize = sizeof(file_info_t) - sizeof(frame_header_t);
 			file_info.fh.nCheckSum = (int32_t)CalCheckSum((BYTE*)&file_info + sizeof(frame_header_t), file_info.fh.nDataSize);
 
@@ -85,103 +84,79 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 			m_dlg->Log(_T("Send file begin."));
 			do
 			{
-				UINT nRetry = 1;
-				int ret1 = 0;
-				do
+				if (m_dlg->IsAbort())
 				{
-					if (m_dlg->IsAbort())
-					{
-						ret1 = -1;
-						break;
-					}
+					ret = -1;
+					break;
+				}
 
-					WriteDataToScreen();
+				WriteDataToScreen();
+				if (nRemainder == 0)
+				{
+					m_dlg->Log(_T("Send file end."));
+					ret = 0;
+					break;
+				}
+				
+				ret = IsDataWritable(RW_WAIT_TIMEOUT, nId + 1);
+				if (ret == 0)
+				{
+					frame_header_t fh;
+					fh.nDataSize = file.Read(readBuf + sizeof(frame_header_t), nMaxReadDataLen - sizeof(frame_header_t));
+					fh.nCheckSum = (uint32_t)CalCheckSum(readBuf + sizeof(frame_header_t), fh.nDataSize);
+					nId++;
+					fh.nId = nId;
+					memcpy(readBuf, (void*)&fh, sizeof(frame_header_t));
 
-					nRetry++;
-
-					if (nRemainder == 0)
-					{
-						m_dlg->Log(_T("Send file end."));
-						ret = 0;
-						break;
-					}
-					ret1 = IsDataWritable(RW_WAIT_TIMEOUT);
-					if (ret1 == 0)
-					{
-						break;
-					}
-					else if (ret1 == RET_RETRY && nRetry < MAX_RETRY_TIMES)
-					{
-						m_dlg->Log(_T("Send file data, Retry:%d"), nRetry);
-						continue;
-					}
-					else if (ret1 == RET_ERROR)
-					{
-						ret1 = -1;
-						m_dlg->Log(_T("Send file is stopped!"));
-						break;
-					}
-					else
-					{
-						m_dlg->Log(_T("Send file data retry out!"));
-						ret1 = -1;
-						break;
-					}
-				} while (true);
-				if (ret1 == -1) break;
-				if (ret == 0) break;
-
-				frame_header_t fh;
-				fh.nDataSize = file.Read(readBuf + sizeof(frame_header_t), nMaxReadDataLen - sizeof(frame_header_t));
-				fh.nCheckSum = (uint32_t)CalCheckSum(readBuf + sizeof(frame_header_t), fh.nDataSize);
-				fh.nId = nId++;
-				memcpy(readBuf, (void*)&fh, sizeof(frame_header_t));
-
-				SetDataToScreenBuf(readBuf, fh.nDataSize + sizeof(frame_header_t));
-				nRemainder -= fh.nDataSize;
-				m_dlg->Log(_T("Sending file data id:%d, DataSize:%d, CheckSum:%d, remainder:%lldKB."), fh.nId, fh.nDataSize, fh.nCheckSum, nRemainder / 1024);
+					SetDataToScreenBuf(readBuf, fh.nDataSize + sizeof(frame_header_t));
+					nRemainder -= fh.nDataSize;
+					m_dlg->Log(_T("Sending file data id:%d, DataSize:%d, CheckSum:%d, remainder:%lldKB."), fh.nId, fh.nDataSize, fh.nCheckSum, nRemainder / 1024);
+				}
+				else if (ret == RET_ERROR)
+				{
+					m_dlg->Log(_T("Send file is stopped!"));
+					break;
+				}
+				else
+				{
+					m_dlg->Log(_T("Send file data time out!"));
+					break;
+				}
 			} while (true);
 
 			delete[] readBuf;
 			file.Close();
 		}
 		else
+		{
+			ret = -1;
 			m_dlg->Log(_T("file open error!"));
+		}
 	}
 	else
 	{
 		m_dlg->Log(_T("Connect wait timeout! IsDataWritable"));
 		::InvalidateRect(NULL, m_rect, TRUE);
+		ret = -1;
 	}
 	return ret;
 }
 
-int CSendFile::IsDataWritable(uint32_t timeout) 
+int CSendFile::IsDataWritable(uint32_t timeout, int nId) 
 {
-	//m_dlg->Log(_T("IsDataWritable begin"));
+	//m_dlg->Log(_T("IsDataWritable begin %d"), nId);
 	int ret = RET_TIMEOUT;
 	time_t oldTime = time(NULL);
 	while ((time(NULL) - oldTime) < timeout)
 	{
 		TCHAR buf[100];
-
-		if (!GetTextFromClipboard(buf, 100, FALSE)) 
-		{
-			Sleep(5); 
-			continue;
-		}
+		GetTextFromClipboard(buf, 100);
 		//m_dlg->Log(_T("IsDataWritable get text %s."), buf);
 
-		if (IsContinue(buf))
+		if (IsContinue(buf, nId))
 		{
-			m_dlg->Log(_T("Get CONTINUE from receive"));
+			//m_dlg->Log(_T("Get CONTINUE from receive"));
 			ret = 0;
-			break;
-		}
-		else if (IsRetry(buf))
-		{
-			m_dlg->Log(_T("get RETRY from receive"));
-			ret = RET_RETRY;
 			break;
 		}
 		else if (IsError(buf))
@@ -198,13 +173,9 @@ int CSendFile::IsDataWritable(uint32_t timeout)
 
 	if (ret == RET_TIMEOUT)
 	{
-		ret = RET_RETRY;
 		m_dlg->Log(_T("IsDataWritable timeout!"));
 	}
-
-	EmptyClipboard();
-
-	//m_dlg->Log(_T("IsDataWritable end"));
+	//m_dlg->Log(_T("IsDataWritable end %d"), nId);
 	return ret;
 }
 
@@ -220,7 +191,7 @@ void CSendFile::WriteDataToScreen()
 	}
 
 	frame_header_t* fh = (frame_header_t*)buf;
-	m_dlg->Log(_T("WriteDataToScreen write img begin, fh.id:%d"), fh->nId);
+	//m_dlg->Log(_T("WriteDataToScreen write img begin, fh.id:%d"), fh->nId);
 
 	HBITMAP MyBit = ::CreateCompatibleBitmap(m_desktop_ctx.hdc, m_rect.Width(), m_rect.Height());
 	LONG ret = ::SetBitmapBits(MyBit, m_nBufSize, m_pBuf);
@@ -253,7 +224,7 @@ void CSendFile::WriteDataToScreen()
 		src++;
 	}
 	fh = (frame_header_t*)buf;
-	m_dlg->Log(_T("WriteDataToScreen write img end, fh.id:%d"), fh->nId);
+	//m_dlg->Log(_T("WriteDataToScreen write img end, fh.id:%d"), fh->nId);
 }
 
 bool CSendFile::SetDataToScreenBuf(BYTE* pData, uint32_t nDataSize) const
@@ -296,25 +267,25 @@ int CSendFile::FillRectRed()
 	return ret;
 }
 
-bool CSendFile::IsContinue(LPCTSTR pctszText) const
+bool CSendFile::IsContinue(LPCTSTR pctszText, int nId) const
 {
 	bool ret = false;
-	if (_tcscmp(pctszText, REPLY_CONTINUE) == 0)
-		ret = true;
+	if (_tcsncmp(pctszText, REPLY_CONTINUE, _tcslen(REPLY_CONTINUE)) == 0)
+	{
+		int num = _ttoi(pctszText + _tcslen(REPLY_CONTINUE));
+		if (nId == num)
+		{
+			ret = true;
+			m_dlg->Log(_T("IsContinue %d"), num);
+		}
+	}
 	return ret;
 }
-bool CSendFile::IsRetry(LPCTSTR pctszText) const
-{
-	bool ret = false;
-	if (_tcscmp(pctszText, REPLY_RETRY) == 0)
-		ret = true;
-	return ret;
 
-}
 bool CSendFile::IsError(LPCTSTR pctszText) const
 {
 	bool ret = false;
-	if (_tcscmp(pctszText, REPLY_ERROR) == 0)
+	if (_tcsncmp(pctszText, REPLY_ERROR, _tcslen(REPLY_ERROR)) == 0)
 		ret = true;
 	return ret;
 }

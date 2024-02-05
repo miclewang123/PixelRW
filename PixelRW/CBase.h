@@ -5,19 +5,18 @@
 #define LOCAL_COPY					0
 
 #define REPLY_CONTINUE				_T("CONTINUE")
-#define REPLY_RETRY					_T("RETRY")
+//#define REPLY_RETRY					_T("RETRY")
 #define REPLY_ERROR					_T("ERROR")
 
-
 #define CONNECTION_WAIT_TIMEOUT		10
-#define RW_WAIT_TIMEOUT				6
+#define RW_WAIT_TIMEOUT				4
 
 #define MIN_RECT_WIDTH				10
 #define MIN_RECT_HEIGHT				10
 
-#define MAX_RETRY_TIMES				1
+//#define MAX_RETRY_TIMES				1
 
-#define RET_RETRY					1
+//#define RET_RETRY					1
 #define RET_NORMAL					0
 #define RET_ERROR					(-1)
 #define RET_TIMEOUT					(-2)
@@ -54,7 +53,7 @@ public:
 public:
 	bool CopyToClipboard(LPCTSTR str) const;
 	bool EmptyClipboard() const;
-	bool GetTextFromClipboard(LPTSTR ptszBuf, size_t nBufSize, BOOL bEmptyClipboard=TRUE) const;
+	bool GetTextFromClipboard(LPTSTR ptszBuf, size_t nBufSize) const;
 	uint64_t CalCheckSum(const BYTE* buf, size_t nBufSize) const;
 
 protected:
