@@ -257,7 +257,6 @@ bool CReceiveFile::Connect()
 		m_nBufSize = m_rect.Width() * m_rect.Height() * 4;
 		m_pBuf = new BYTE[m_nBufSize * SPLIT_COUNT * SPLIT_COUNT];
 
-		Request(REQUEST_CONTINUE, -1);
 		m_dlg->Log(_T("find Rect Left top, right bottom %d %d %d %d\n"), m_rect.left, m_rect.top, m_rect.right, m_rect.bottom);
 		if (IsDataReadable(CONNECTION_WAIT_TIMEOUT, -1) == 0)
 		{
@@ -324,7 +323,6 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						break;
 					}
 
-					Request(REQUEST_CONTINUE, nId);
 					ret = IsDataReadable(RW_WAIT_TIMEOUT, nId);
 					if (ret == 0)
 					{
@@ -332,17 +330,25 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						nFileChecksum += fh->nCheckSum;
 
 						static ULONGLONG oldTickcount = GetTickCount64();
-						TCHAR ch[100];
-						_stprintf_s(ch, 100, _T("Speed:%lldKB,remain:%lldKB."), (sizeof(frame_header_t) + fh->nDataSize) / (1 + GetTickCount64() - oldTickcount), nRemain / 1024);
-						oldTickcount = GetTickCount64();
-						m_dlg->DisplaySpeed(ch);
+						static int64_t oldRemainder = nRemain;
 
+						ULONGLONG nTimeDiff = 1 + GetTickCount64() - oldTickcount;
+						if (nTimeDiff > 1000)
+						{
+							TCHAR ch[100];
+							_stprintf_s(ch, 100, _T("Speed:%lldKB,remain:%lldKB."), (oldRemainder - nRemain) / nTimeDiff, nRemain / 1024);
+							oldTickcount = GetTickCount64();
+							oldRemainder = nRemain;
+							m_dlg->DisplaySpeed(ch);
+						}
+						
 						file.Write(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
 						nRemain -= fh->nDataSize;
 
 						m_dlg->Log(_T("Receiving File data id:%d, remain:%lldKB."), fh->nId, nRemain / 1024);
 						if (nRemain == 0)
-						{
+						{	
+							Request(REQUEST_COMPLETE);
 							m_dlg->Log(_T("ReceiveFile completed."));
 							break;
 						}
@@ -402,6 +408,7 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId)
 	frame_header_t *fh = (frame_header_t*)m_pBuf;
 	while ((time(NULL) - oldTime) < timeout)
 	{
+		Request(REQUEST_CONTINUE, nId);
 		GetRGBDataFromScreenRect();
 		if (fh->nId == nId)
 		{
@@ -438,7 +445,8 @@ int CReceiveFile::GetRGBDataFromScreenRect()
 	{
 		for (int32_t j = 0; j < SPLIT_COUNT; j++)
 		{
-			GetRGBDataFromScreenRect(m_rect.left + i * m_rect.Width(), m_rect.top + j * m_rect.Height(), m_rect.Width(), m_rect.Height(), m_pBuf + (i * SPLIT_COUNT + j) * m_nBufSize, m_nBufSize);
+			GetRGBDataFromScreenRect(m_rect.left + i * m_rect.Width(), m_rect.top + j * m_rect.Height(), 
+				m_rect.Width(), m_rect.Height(), m_pBuf + (i * SPLIT_COUNT + j) * m_nBufSize, m_nBufSize);
 		}
 	}
 

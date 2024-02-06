@@ -137,7 +137,7 @@ void CPixelRWDlg::OnBnClickedBtnSend()
 	GetDlgItemText(IDC_EDIT_FILE_SEND, strFile);
 	int ret = sendFile.SendFile(strFile);
 
-	if (ret == 0) Log(_T("send succeed"));
+	if (ret >= 0) Log(_T("send succeed"));
 	else Log(_T("send failed"));
 
 	GetDlgItem(IDC_BTN_SEND)->EnableWindow(TRUE);

@@ -32,12 +32,14 @@ private:
 
 	uint64_t GetFileCheckSum(CFile* file) const;
 
-	int IsDataWritable(uint32_t timeout, int nId, bool bFinal) ;
+	int IsDataWritable(uint32_t timeout, int nId) ;
 	int FillRectRed() ;
 
 	bool IsContinue(LPCTSTR pctszText, int nId) const;
 	bool IsError(LPCTSTR pctszText) const;
 	bool IsRetry(LPCTSTR pctszText) const;
+	bool IsComplete(LPCTSTR pctszText) const;
+
 
 private:
 	CRect m_rect;			// rect to transfer data

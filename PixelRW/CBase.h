@@ -2,21 +2,22 @@
 
 #include "PixelRWDlg.h"
 
-//#define LOCAL_COPY					1
+//#define LOCAL_COPY				1
 
-#define REQUEST_CONTINUE				_T("CONTINUE")
-#define REQUEST_RETRY					_T("RETRY")
-#define REQUEST_ERROR					_T("ERROR")
+#define REQUEST_CONTINUE			_T("CONTINUE")
+#define REQUEST_RETRY				_T("RETRY")
+#define REQUEST_ERROR				_T("ERROR")
+#define REQUEST_COMPLETE			_T("COMPLETE")
 
-#define CONNECTION_WAIT_TIMEOUT		5
+#define CONNECTION_WAIT_TIMEOUT		10
 #define RW_WAIT_TIMEOUT				4
 
 #define MIN_RECT_WIDTH				10
 #define MIN_RECT_HEIGHT				10
 
-#define MAX_RETRY_TIMES				3
+//#define MAX_RETRY_TIMES			3
 
-#define RET_FINAL					2
+#define RET_COMPLETE				2
 #define RET_RETRY					1
 #define RET_NORMAL					0
 #define RET_ERROR					(-1)
