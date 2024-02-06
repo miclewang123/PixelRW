@@ -209,11 +209,11 @@ int CSendFile::IsDataWritable(uint32_t timeout, int nId, bool bFinal)
 
 void CSendFile::WriteDataToScreen() 
 {
-	BYTE buf[4];
-	buf[0] = m_pBuf[0];
-	buf[1] = m_pBuf[1];
-	buf[2] = m_pBuf[2];
-	buf[3] = m_pBuf[4];
+	//BYTE buf[4];
+	//buf[0] = m_pBuf[0];
+	//buf[1] = m_pBuf[1];
+	//buf[2] = m_pBuf[2];
+	//buf[3] = m_pBuf[4];
 	//m_dlg->Log(_T("WriteDataToScreen, fh id: %d"), *((int32_t*)buf));
 
 	for (int32_t i = 0; i < SPLIT_COUNT; i++)

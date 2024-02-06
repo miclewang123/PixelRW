@@ -400,11 +400,9 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId)
 	time_t oldTime = time(NULL);
 
 	frame_header_t *fh = (frame_header_t*)m_pBuf;
-	//m_dlg->Log(_T("IsDataReadable begin, fh.id:%d"), nId);
 	while ((time(NULL) - oldTime) < timeout)
 	{
 		GetRGBDataFromScreenRect();
-		fh = (frame_header_t*)m_pBuf;
 		if (fh->nId == nId)
 		{
 			m_dlg->Log(_T("fh id:%d, DataSize:%d, CheckSum:%d"), fh->nId, fh->nDataSize, fh->nCheckSum);
@@ -419,25 +417,11 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId)
 			{
 				m_dlg->Log(_T("IsDataReadable: Checksum error. fh id:%d, DataSize:%d, CheckSum:%d, CheckSum_cal:%d"), fh->nId, fh->nDataSize, fh->nCheckSum, nCalFrameCheckSum);
 				if (nId != -1)	Request(REQUEST_RETRY);
-				//ret = RET_ERROR;
-				//break;
 			}
-		}
-		else 
-		{
-			//m_dlg->Log(_T("IsDataReadable=====, fh.id:%d, nId: %d"), fh->nId, nId);
-
-			//if (nId != -1 && fh->nId == (nId -1))
-			//{
-			//	Request(REQUEST_RETRY);
-			//	//ret = RET_RETRY;
-			//}
 		}
 
 		Sleep(10);
 	};
-	//m_dlg->Log(_T("IsDataReadable end, fh.id:%d"), nId);
-
 	return ret;
 }
 
@@ -450,8 +434,6 @@ int  CReceiveFile::GetFileInfo(file_info_t* file_info)
 
 int CReceiveFile::GetRGBDataFromScreenRect() 
 {
-	//m_dlg->Log(_T("GetRGBDataFromScreenRect begin."));
-
 	for (int32_t i = 0; i < SPLIT_COUNT; i++)
 	{
 		for (int32_t j = 0; j < SPLIT_COUNT; j++)
@@ -527,7 +509,6 @@ int CReceiveFile::GetRGBDataFromScreenRect(uint32_t nx, uint32_t ny, uint32_t nW
 			m_dlg->Log(_T("Failed, GetRGBDataFromScreenRect rect bitmap is nullA."));
 		}
 		bitmap->Detach();
-		//bitmap->DeleteObject();
 
 		::SelectObject(m_ctx.hdcMem, hOldBmp);
 		::DeleteObject(hBitmap);

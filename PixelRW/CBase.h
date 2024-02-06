@@ -2,7 +2,7 @@
 
 #include "PixelRWDlg.h"
 
-#define LOCAL_COPY					1
+//#define LOCAL_COPY					1
 
 #define REQUEST_CONTINUE				_T("CONTINUE")
 #define REQUEST_RETRY					_T("RETRY")
@@ -66,5 +66,7 @@ protected:
 // problem:
 // 1. remote copy clipboard hWnd must be NULL;
 // 2. remote 大图像无法传输；
-// 3. local copy must add log info to avoid error.
-// 4. before use must first run copy/paste manually.
+// 3. split has problem;
+
+// 3. local copy must add log info to avoid error.  it is OK now.
+// 4. before use must first run copy/paste manually. it is OK now.
