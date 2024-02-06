@@ -459,7 +459,7 @@ void CPixelRWDlg::OnBnClickedBtnTest()
 			DispatchMessage(&msg);
 		}
 
-		Sleep(1000);
+		//Sleep(1000);
 		
 		c = dc_screen->SetPixel(x, y, RGB(0xff, 0xff, 0xff));
 		str.Format(_T("%06X"), c);
@@ -470,7 +470,7 @@ void CPixelRWDlg::OnBnClickedBtnTest()
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		Sleep(1000);
+		Sleep(100);
 	}
 
 	dc_screen->DeleteDC();

@@ -258,7 +258,7 @@ bool CReceiveFile::Connect()
 		m_nBufSize = m_rect.Width() * m_rect.Height() * 4;
 		m_pBuf = new BYTE[m_nBufSize];
 
-		Reply(REPLY_CONTINUE, -1);
+		Request(REQUEST_CONTINUE, -1);
 		m_dlg->Log(_T("find Rect Left top, right bottom %d %d %d %d\n"), m_rect.left, m_rect.top, m_rect.right, m_rect.bottom);
 		if (IsDataReadable(CONNECTION_WAIT_TIMEOUT, -1) == 0)
 		{
@@ -300,8 +300,8 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 		{
 			uint64_t nFileChecksum = 0;
 			uint32_t nId = 0;
-			int64_t nRemain = file_info.filesize;
-			m_dlg->Log(_T("Receive file:%s, File size:%lld, check sum:%lld."), file_info.filename, file_info.filesize, file_info.checksum);
+			int64_t nRemain = file_info.nFileSize;
+			m_dlg->Log(_T("Receive file:%s, File size:%lld, check sum:%lld."), file_info.tchFileName, file_info.nFileSize, file_info.nFileCheckSum);
 
 			CFile file;
 			CString strFileName;
@@ -311,7 +311,7 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 			else
 			{
 				strFileName = _T("D:");
-				TCHAR *ret = _tcsrchr(file_info.filename, _T('\\'));
+				TCHAR *ret = _tcsrchr(file_info.tchFileName, _T('\\'));
 				strFileName += ret;
 			}
 
@@ -325,7 +325,7 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						break;
 					}
 
-					Reply(REPLY_CONTINUE, nId);
+					Request(REQUEST_CONTINUE, nId);
 					ret = IsDataReadable(RW_WAIT_TIMEOUT, nId);
 					if (ret == 0)
 					{
@@ -351,7 +351,7 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						{
 							m_dlg->Log(_T("ReceiveFile completed. but has error!"));
 							ret = -1;
-							Reply(REPLY_ERROR);
+							Request(REQUEST_ERROR);
 							break;
 						}
 						else
@@ -361,7 +361,7 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						break;
 				} while (true);
 
-				if (nFileChecksum != file_info.checksum)
+				if (nFileChecksum != file_info.nFileCheckSum)
 				{
 					m_dlg->Log(_T("ReceiveFile checksum failed!"));
 					ret = -1;
@@ -419,13 +419,24 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId)
 			}
 			else
 			{
-				Sleep(0);
-				m_dlg->Log(_T("checksum error. fh id:%d, DataSize:%d, CheckSum:%d"), fh->nId, fh->nDataSize, fh->nCheckSum);
-				continue;
+				m_dlg->Log(_T("Checksum error. fh id:%d, DataSize:%d, CheckSum:%d"), fh->nId, fh->nDataSize, fh->nCheckSum);
+				if (nId != -1)	Request(REQUEST_RETRY);
+				//ret = RET_ERROR;
+				//break;
 			}
 		}
-		
-		Sleep(50);
+		else 
+		{
+			//m_dlg->Log(_T("IsDataReadable=====, fh.id:%d, nId: %d"), fh->nId, nId);
+
+			//if (nId != -1 && fh->nId == (nId -1))
+			//{
+			//	Request(REQUEST_RETRY);
+			//	//ret = RET_RETRY;
+			//}
+		}
+
+		Sleep(10);
 	};
 	//m_dlg->Log(_T("IsDataReadable end, fh.id:%d"), nId);
 
@@ -536,11 +547,11 @@ int CReceiveFile::GetRGBDataFromScreenRect(uint32_t nx, uint32_t ny, uint32_t nW
 	return ret;
 }
 
-void CReceiveFile::Reply(LPCTSTR pctszReply, int nId) const
+void CReceiveFile::Request(LPCTSTR pctszRequest, int nId) const
 {
 	TCHAR tchTmp[20];
-	_stprintf_s(tchTmp, 20, _T("%s%d"), pctszReply, nId);
+	_stprintf_s(tchTmp, 20, _T("%s%d"), pctszRequest, nId);
 
 	CopyToClipboard(tchTmp);
-	m_dlg->Log(_T("reply %s to send"), tchTmp);
+	m_dlg->Log(_T("Request id:%s to send"), tchTmp);
 }

@@ -47,7 +47,7 @@ private:
 	int GetRGBDataFromScreenRect() ;
 	int GetRGBDataFromScreenRect(uint32_t nx, uint32_t ny, uint32_t nWidth, uint32_t nHeight, BYTE* pRGBBuf, uint32_t nRGBBufSize) ;
 
-	void Reply(LPCTSTR pctszReply, int nId = 0) const;
+	void Request(LPCTSTR pctszRequest, int nId = 0) const;
 
 private:
 	CRect	m_rect;			// rect to transfer data

@@ -37,6 +37,7 @@ private:
 
 	bool IsContinue(LPCTSTR pctszText, int nId) const;
 	bool IsError(LPCTSTR pctszText) const;
+	bool IsRetry(LPCTSTR pctszText) const;
 
 private:
 	CRect m_rect;			// rect to transfer data

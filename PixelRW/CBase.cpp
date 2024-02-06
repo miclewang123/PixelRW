@@ -17,10 +17,7 @@ bool CBase::CopyToClipboard(LPCTSTR str) const
 				memcpy(str1, str, nStrSize);
 				::GlobalUnlock(hBuf);
 				HANDLE h = ::SetClipboardData(CF_UNICODETEXT, hBuf);
-				if(h)
-					m_dlg->Log(_T("CopyToClipboard %s"), str);
-				else
-					m_dlg->Log(_T("CopyToClipboard error."));
+				if(!h) m_dlg->Log(_T("CopyToClipboard error."));
 				ret = true;
 			}
 			::GlobalFree(hBuf);
