@@ -53,7 +53,7 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 	int32_t nId = -1;
 
 	FillRectRed();
-	if (IsDataWritable(CONNECTION_WAIT_TIMEOUT, nId) == 0)
+	if (IsDataWritable(CONNECTION_WAIT_TIMEOUT, nId, false) == 0)
 	{
 		CFile file;
 		//m_dlg->Log(_T("before file open"));
@@ -87,21 +87,9 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 			int nRetry = 0;
 			do
 			{
-				if (m_dlg->IsAbort())
-				{
-					ret = -1;
-					break;
-				}
+				bool bFinal = (nRemainder == 0);
+				ret = IsDataWritable(RW_WAIT_TIMEOUT, nId + 1, bFinal);
 
-				WriteDataToScreen();
-				if (nRemainder == 0)
-				{
-					//m_dlg->Log(_T("Send file end."));
-					ret = 0;
-					break;
-				}
-				
-				ret = IsDataWritable(RW_WAIT_TIMEOUT, nId + 1);
 				if (ret == 0)
 				{
 					frame_header_t fh;
@@ -128,9 +116,21 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 					m_dlg->Log(_T("Send file is stopped!"));
 					break;
 				}
+				else if (ret == RET_FINAL)
+				{
+					m_dlg->Log(_T("Send file complete!"));
+					ret = 0;
+					break;
+				}
 				else
 				{
 					m_dlg->Log(_T("Send file data time out!"));
+					break;
+				}
+
+				if (m_dlg->IsAbort())
+				{
+					ret = -1;
 					break;
 				}
 			} while (true);
@@ -153,13 +153,28 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 	return ret;
 }
 
-int CSendFile::IsDataWritable(uint32_t timeout, int nId) 
+int CSendFile::IsDataWritable(uint32_t timeout, int nId, bool bFinal) 
 {
 	//m_dlg->Log(_T("IsDataWritable begin %d"), nId);
 	int ret = RET_TIMEOUT;
 	time_t oldTime = time(NULL);
 	while ((time(NULL) - oldTime) < timeout)
 	{
+		if (nId == -1)
+		{
+			FillRectRed();
+			Sleep(100);
+		}
+		else
+		{
+			WriteDataToScreen();
+		}
+
+		if (bFinal)
+		{
+			ret = RET_FINAL;
+			break;
+		}
 		TCHAR buf[100] = {0};
 		if (GetTextFromClipboard(buf, 100))
 		{
@@ -183,6 +198,7 @@ int CSendFile::IsDataWritable(uint32_t timeout, int nId)
 				break;
 			}
 		}
+
 		Sleep(10);
 	};
 
@@ -198,7 +214,7 @@ void CSendFile::WriteDataToScreen()
 	buf[1] = m_pBuf[1];
 	buf[2] = m_pBuf[2];
 	buf[3] = m_pBuf[4];
-	m_dlg->Log(_T("WriteDataToScreen, fh id: %d"), *((int32_t*)buf));
+	//m_dlg->Log(_T("WriteDataToScreen, fh id: %d"), *((int32_t*)buf));
 
 	for (int32_t i = 0; i < SPLIT_COUNT; i++)
 	{
@@ -218,31 +234,6 @@ void CSendFile::WriteDataToScreen()
 				m_dlg->Log(_T("WriteDataToScreen Error"));
 		}
 	}
-
-
-	//HWND hWnd = ::GetDesktopWindow();
-	//HDC hdc = NULL;
-	//HDC hdcMem = NULL;
-
-	//hdc = ::GetDC(hWnd);
-	//hdcMem = ::CreateCompatibleDC(hdc);
-
-	//HBITMAP MyBit = ::CreateCompatibleBitmap(hdc, m_rect.Width(), m_rect.Height());
-	//LONG ret = ::SetBitmapBits(MyBit, m_nBufSize, m_pBuf);
-	//if (ret)
-	//{
-	//	HGDIOBJ oldBitmap = ::SelectObject(hdcMem, MyBit);
-	//	::BitBlt(hdc, m_rect.left, m_rect.top, m_rect.Width(), m_rect.Height(), hdcMem, 0, 0, SRCCOPY);
-
-	//	::SelectObject(hdcMem, oldBitmap);
-	//	::DeleteObject(MyBit);
-	//}
-	//else
-	//	m_dlg->Log(_T("WriteDataToScreen Error"));
-
-	//if (hdcMem) ::DeleteObject(hdcMem);
-	//if (hdc) ::ReleaseDC(m_desktop_ctx.hWnd, m_desktop_ctx.hdc);
-
 
 	//HBITMAP MyBit = ::CreateCompatibleBitmap(m_desktop_ctx.hdc, m_rect.Width(), m_rect.Height());
 	//LONG ret = ::SetBitmapBits(MyBit, m_nBufSize, m_pBuf);

@@ -32,7 +32,7 @@ private:
 
 	uint64_t GetFileCheckSum(CFile* file) const;
 
-	int IsDataWritable(uint32_t timeout, int nId) ;
+	int IsDataWritable(uint32_t timeout, int nId, bool bFinal) ;
 	int FillRectRed() ;
 
 	bool IsContinue(LPCTSTR pctszText, int nId) const;
