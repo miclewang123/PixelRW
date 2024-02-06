@@ -219,6 +219,31 @@ void CSendFile::WriteDataToScreen()
 		}
 	}
 
+
+	//HWND hWnd = ::GetDesktopWindow();
+	//HDC hdc = NULL;
+	//HDC hdcMem = NULL;
+
+	//hdc = ::GetDC(hWnd);
+	//hdcMem = ::CreateCompatibleDC(hdc);
+
+	//HBITMAP MyBit = ::CreateCompatibleBitmap(hdc, m_rect.Width(), m_rect.Height());
+	//LONG ret = ::SetBitmapBits(MyBit, m_nBufSize, m_pBuf);
+	//if (ret)
+	//{
+	//	HGDIOBJ oldBitmap = ::SelectObject(hdcMem, MyBit);
+	//	::BitBlt(hdc, m_rect.left, m_rect.top, m_rect.Width(), m_rect.Height(), hdcMem, 0, 0, SRCCOPY);
+
+	//	::SelectObject(hdcMem, oldBitmap);
+	//	::DeleteObject(MyBit);
+	//}
+	//else
+	//	m_dlg->Log(_T("WriteDataToScreen Error"));
+
+	//if (hdcMem) ::DeleteObject(hdcMem);
+	//if (hdc) ::ReleaseDC(m_desktop_ctx.hWnd, m_desktop_ctx.hdc);
+
+
 	//HBITMAP MyBit = ::CreateCompatibleBitmap(m_desktop_ctx.hdc, m_rect.Width(), m_rect.Height());
 	//LONG ret = ::SetBitmapBits(MyBit, m_nBufSize, m_pBuf);
 	//if (ret)
@@ -231,7 +256,6 @@ void CSendFile::WriteDataToScreen()
 	//}
 	//else
 	//	m_dlg->Log(_T("WriteDataToScreen Error"));
-
 }
 
 bool CSendFile::SetDataToScreenBuf(BYTE* pData, uint32_t nDataSize) const
@@ -240,13 +264,18 @@ bool CSendFile::SetDataToScreenBuf(BYTE* pData, uint32_t nDataSize) const
 	if (pData == NULL) return false;
 	if (m_nBufSize * SPLIT_COUNT * SPLIT_COUNT < (nDataSize + 2) / 3 * 4)	return false;
 
-	for (uint32_t src = 0, dst = 0; src < nDataSize;)
+	uint32_t src = 0, dst = 0;
+	for (; src < nDataSize;)
 	{
 		m_pBuf[dst++] = pData[src++];
 		m_pBuf[dst++] = pData[src++];
 		m_pBuf[dst++] = pData[src++];
 		m_pBuf[dst++] = (BYTE)0x0;
 	}
+
+	while(dst < m_nBufSize)
+		m_pBuf[dst++] = 0;
+
 	return true;
 }
 

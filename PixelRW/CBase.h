@@ -8,7 +8,7 @@
 #define REQUEST_RETRY					_T("RETRY")
 #define REQUEST_ERROR					_T("ERROR")
 
-#define CONNECTION_WAIT_TIMEOUT		10
+#define CONNECTION_WAIT_TIMEOUT		5
 #define RW_WAIT_TIMEOUT				4
 
 #define MIN_RECT_WIDTH				10
