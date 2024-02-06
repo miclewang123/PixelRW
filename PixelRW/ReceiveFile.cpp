@@ -5,12 +5,13 @@ CReceiveFile::CReceiveFile(CPixelRWDlg* dlg, CRect& rect) :CBase(dlg) {
 	m_rect = rect;
 
 	m_nBufSize = m_rect.Width() * m_rect.Height() * 4;
-	m_pBuf = new BYTE[m_nBufSize];
+	m_pBuf = new BYTE[m_nBufSize * SPLIT_COUNT * SPLIT_COUNT];
 
 	m_ctx.hdc = NULL;
 	m_ctx.hdcMem = NULL;
 
 	m_ctx.hWnd = ::GetDesktopWindow();
+
 	//#if LOCAL_COPY
 	//	m_ctx.hWnd = ::GetDesktopWindow();
 	//#else
@@ -141,8 +142,6 @@ int CReceiveFile::GetRightBottom(POINT* point, uint32_t nWidth, uint32_t nHeight
 //find the range of red, width>100 and height >100
 int CReceiveFile::FindDataRang()
 {
-	//return 0;
-
 	//uint32_t screen_width = GetSystemMetrics(SM_CXSCREEN);
 	//uint32_t screen_height = GetSystemMetrics(SM_CYSCREEN);
 
@@ -256,7 +255,7 @@ bool CReceiveFile::Connect()
 	{
 		if (m_pBuf) delete[] m_pBuf;
 		m_nBufSize = m_rect.Width() * m_rect.Height() * 4;
-		m_pBuf = new BYTE[m_nBufSize];
+		m_pBuf = new BYTE[m_nBufSize * SPLIT_COUNT * SPLIT_COUNT];
 
 		Request(REQUEST_CONTINUE, -1);
 		m_dlg->Log(_T("find Rect Left top, right bottom %d %d %d %d\n"), m_rect.left, m_rect.top, m_rect.right, m_rect.bottom);
@@ -310,9 +309,9 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 				strFileName = pctszFileName;
 			else
 			{
-				strFileName = _T("D:");
+				strFileName = _T("D:\\copy_");
 				TCHAR *ret = _tcsrchr(file_info.tchFileName, _T('\\'));
-				strFileName += ret;
+				strFileName += (ret + 1);
 			}
 
 			if (file.Open(strFileName, CFile::modeCreate | CFile::modeWrite))
@@ -377,7 +376,7 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 			else
 			{
 				ret = -1;
-				m_dlg->Log(_T("Open Receive File: %s failed."), pctszFileName);
+				m_dlg->Log(_T("Open Receive File: %s failed."), strFileName);
 			}
 		}
 		else
@@ -389,7 +388,6 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 	}
 	else
 	{
-		m_dlg->Log(_T("Connect error!"));
 		ret = -1;
 	}
 
@@ -410,7 +408,7 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId)
 		if (fh->nId == nId)
 		{
 			m_dlg->Log(_T("fh id:%d, DataSize:%d, CheckSum:%d"), fh->nId, fh->nDataSize, fh->nCheckSum);
-			uint64_t nCalFrameCheckSum = fh->nDataSize > (m_nBufSize - sizeof(frame_header_t)) ? 0 : CalCheckSum(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
+			uint64_t nCalFrameCheckSum = fh->nDataSize > (m_nBufSize * SPLIT_COUNT * SPLIT_COUNT - sizeof(frame_header_t)) ? 0 : CalCheckSum(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
 			uint32_t nCalCheckSum = (uint32_t)nCalFrameCheckSum;
 			if (fh->nCheckSum == nCalCheckSum)
 			{
@@ -419,7 +417,7 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId)
 			}
 			else
 			{
-				m_dlg->Log(_T("Checksum error. fh id:%d, DataSize:%d, CheckSum:%d"), fh->nId, fh->nDataSize, fh->nCheckSum);
+				m_dlg->Log(_T("IsDataReadable: Checksum error. fh id:%d, DataSize:%d, CheckSum:%d, CheckSum_cal:%d"), fh->nId, fh->nDataSize, fh->nCheckSum, nCalFrameCheckSum);
 				if (nId != -1)	Request(REQUEST_RETRY);
 				//ret = RET_ERROR;
 				//break;
@@ -453,33 +451,26 @@ int  CReceiveFile::GetFileInfo(file_info_t* file_info)
 int CReceiveFile::GetRGBDataFromScreenRect() 
 {
 	//m_dlg->Log(_T("GetRGBDataFromScreenRect begin."));
-#if 0
-	GetRGBDataFromScreenRect(m_rect.left, m_rect.top, m_rect.Width()/2, m_rect.Height(), m_pBuf, m_nBufSize/2);
-	GetRGBDataFromScreenRect(m_rect.left+100, m_rect.top + 100, m_rect.Width() / 2, m_rect.Height(), m_pBuf + m_nBufSize / 2, m_nBufSize/2);
 
-	CString str = _T("GetRGBDataFromScreenRect ");
-	for (size_t i = 0; i < 40*40*3; i++)
+	for (int32_t i = 0; i < SPLIT_COUNT; i++)
 	{
-		CString s;
-		s.Format(_T("%02X "), m_pBuf[i]);
-		str += s;
+		for (int32_t j = 0; j < SPLIT_COUNT; j++)
+		{
+			GetRGBDataFromScreenRect(m_rect.left + i * m_rect.Width(), m_rect.top + j * m_rect.Height(), m_rect.Width(), m_rect.Height(), m_pBuf + (i * SPLIT_COUNT + j) * m_nBufSize, m_nBufSize);
+		}
 	}
-	m_dlg->Log(str);
-#else
-	GetRGBDataFromScreenRect(m_rect.left, m_rect.top, m_rect.Width(), m_rect.Height(), m_pBuf, m_nBufSize);
 
 	// below is important, in local copy must uncomment below lines
-#if LOCAL_COPY
-	CString str = _T("GetRGBDataFromScreenRect ");
-	for (size_t i = 0; i < (size_t)20 * 20 * 3; i++)
-	{
-		CString s;
-		s.Format(_T("%02X "), m_pBuf[i]);
-		str += s;
-	}	
-	m_dlg->Log(str);
-#endif
-#endif
+//#if LOCAL_COPY
+//	CString str = _T("GetRGBDataFromScreenRect ");
+//	for (size_t i = 0; i < (size_t)20 * 20 * 3; i++)
+//	{
+//		CString s;
+//		s.Format(_T("%02X "), m_pBuf[i]);
+//		str += s;
+//	}	
+//	m_dlg->Log(str);
+//#endif
 
 //	// copy screen to local
 //	CRect rc;

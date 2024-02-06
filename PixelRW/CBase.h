@@ -2,7 +2,7 @@
 
 #include "PixelRWDlg.h"
 
-#define LOCAL_COPY					0
+#define LOCAL_COPY					1
 
 #define REQUEST_CONTINUE				_T("CONTINUE")
 #define REQUEST_RETRY					_T("RETRY")
@@ -21,9 +21,11 @@
 #define RET_ERROR					(-1)
 #define RET_TIMEOUT					(-2)
 
+#define	SPLIT_COUNT					1
+
 struct frame_header_t
 {
-	uint32_t nId;
+	int32_t nId;
 	uint32_t nDataSize;
 	uint32_t nCheckSum;
 };

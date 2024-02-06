@@ -4,8 +4,8 @@
 CSendFile::CSendFile(CPixelRWDlg* dlg, CRect& rect) :CBase(dlg) {
 	m_rect = rect;
 	m_nBufSize = m_rect.Width() * m_rect.Height() * 4;
-	m_pBuf = (BYTE*)new int64_t[m_nBufSize / sizeof(int64_t)];
-	ZeroMemory(m_pBuf, m_nBufSize);
+	m_pBuf = new BYTE[m_nBufSize * SPLIT_COUNT * SPLIT_COUNT];
+	ZeroMemory(m_pBuf, m_nBufSize * SPLIT_COUNT * SPLIT_COUNT);
 
 	EmptyClipboard();
 	TCHAR tchBuf[200];
@@ -72,10 +72,11 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 			file_info.fh.nCheckSum = (int32_t)CalCheckSum((BYTE*)&file_info + sizeof(frame_header_t), file_info.fh.nDataSize);
 
 			nRemainder = file_info.nFileSize;
+			m_dlg->Log(_T("Sending file data id:%d, DataSize:%d, CheckSum:%d, remainder:%lldKB."), file_info.fh.nId, file_info.fh.nDataSize, file_info.fh.nCheckSum, nRemainder / 1024);
 
 			m_dlg->Log(_T("Send file : %s, File size:%lld, check sum:%lld."), file_info.tchFileName, file_info.nFileSize, file_info.nFileCheckSum);
 
-			uint32_t nMaxReadDataLen = m_nBufSize / 4 * 3;
+			uint32_t nMaxReadDataLen = m_nBufSize / 4 * 3 * SPLIT_COUNT;
 			BYTE* readBuf = new BYTE[nMaxReadDataLen];
 
 			SetDataToScreenBuf((BYTE*)&file_info, sizeof(file_info_t));
@@ -192,56 +193,52 @@ int CSendFile::IsDataWritable(uint32_t timeout, int nId)
 
 void CSendFile::WriteDataToScreen() 
 {
-	BYTE buf[20];
-	for (uint32_t src = 0, dst = 0; src < 5;)
+	BYTE buf[4];
+	buf[0] = m_pBuf[0];
+	buf[1] = m_pBuf[1];
+	buf[2] = m_pBuf[2];
+	buf[3] = m_pBuf[4];
+	m_dlg->Log(_T("WriteDataToScreen, fh id: %d"), *((int32_t*)buf));
+
+	for (int32_t i = 0; i < SPLIT_COUNT; i++)
 	{
-		buf[dst++] = m_pBuf[src++];
-		buf[dst++] = m_pBuf[src++];
-		buf[dst++] = m_pBuf[src++];
-		src++;
+		for (int32_t j = 0; j < SPLIT_COUNT; j++)
+		{
+			HBITMAP MyBit = ::CreateCompatibleBitmap(m_desktop_ctx.hdc, m_rect.Width(), m_rect.Height());
+			LONG ret = ::SetBitmapBits(MyBit, m_nBufSize, m_pBuf + m_nBufSize * (i * SPLIT_COUNT + j));
+			if (ret)
+			{
+				HGDIOBJ oldBitmap = ::SelectObject(m_desktop_ctx.hdcMem, MyBit);
+				::BitBlt(m_desktop_ctx.hdc, m_rect.left + i * m_rect.Width(), m_rect.top + j * m_rect.Height(), m_rect.Width(), m_rect.Height(), m_desktop_ctx.hdcMem, 0, 0, SRCCOPY);
+
+				::SelectObject(m_desktop_ctx.hdcMem, oldBitmap);
+				::DeleteObject(MyBit);
+			}
+			else
+				m_dlg->Log(_T("WriteDataToScreen Error"));
+		}
 	}
-	frame_header_t* fh = (frame_header_t*)buf;
-	m_dlg->Log(_T("WriteDataToScreen, fh.id:%d"), fh->nId);
 
-	HBITMAP MyBit = ::CreateCompatibleBitmap(m_desktop_ctx.hdc, m_rect.Width(), m_rect.Height());
-	LONG ret = ::SetBitmapBits(MyBit, m_nBufSize, m_pBuf);
-	if (ret)
-	{
-		HGDIOBJ oldBitmap = ::SelectObject(m_desktop_ctx.hdcMem, MyBit);
-		::BitBlt(m_desktop_ctx.hdc, m_rect.left, m_rect.top, m_rect.Width(), m_rect.Height(), m_desktop_ctx.hdcMem, 0, 0, SRCCOPY);
-
-		::SelectObject(m_desktop_ctx.hdcMem, oldBitmap);
-		::DeleteObject(MyBit);
-	}
-	else
-		m_dlg->Log(_T("WriteDataToScreen Error"));
-
-	//below is not necessary
-	//CString str = _T("WriteDataToScreen ");
-	//for (size_t i = 0; i < 20*20*4; i++)
+	//HBITMAP MyBit = ::CreateCompatibleBitmap(m_desktop_ctx.hdc, m_rect.Width(), m_rect.Height());
+	//LONG ret = ::SetBitmapBits(MyBit, m_nBufSize, m_pBuf);
+	//if (ret)
 	//{
-	//	CString s;
-	//	if(i%4 != 3) s.Format(_T("%02X "), m_pBuf[i]);
-	//	str += s;
-	//}
-	//m_dlg->Log(str);
+	//	HGDIOBJ oldBitmap = ::SelectObject(m_desktop_ctx.hdcMem, MyBit);
+	//	::BitBlt(m_desktop_ctx.hdc, m_rect.left, m_rect.top, m_rect.Width(), m_rect.Height(), m_desktop_ctx.hdcMem, 0, 0, SRCCOPY);
 
-	//for (uint32_t src = 0, dst = 0; src < 30;)
-	//{
-	//	buf[dst++] = m_pBuf[src++];
-	//	buf[dst++] = m_pBuf[src++];
-	//	buf[dst++] = m_pBuf[src++];
-	//	src++;
+	//	::SelectObject(m_desktop_ctx.hdcMem, oldBitmap);
+	//	::DeleteObject(MyBit);
 	//}
-	//fh = (frame_header_t*)buf;
-	//m_dlg->Log(_T("WriteDataToScreen write img end, fh.id:%d"), fh->nId);
+	//else
+	//	m_dlg->Log(_T("WriteDataToScreen Error"));
+
 }
 
 bool CSendFile::SetDataToScreenBuf(BYTE* pData, uint32_t nDataSize) const
 {
 	//m_dlg->Log(_T("SetDataToScreenBuf: datasize:%d"), nDataSize);
 	if (pData == NULL) return false;
-	if (m_nBufSize < (nDataSize + 2) / 3 * 4)	return false;
+	if (m_nBufSize * SPLIT_COUNT * SPLIT_COUNT < (nDataSize + 2) / 3 * 4)	return false;
 
 	for (uint32_t src = 0, dst = 0; src < nDataSize;)
 	{

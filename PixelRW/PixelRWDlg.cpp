@@ -184,8 +184,11 @@ void CPixelRWDlg::OnBnClickedBtnSendCopy()
 	{
 		CBase base(this);
 		TCHAR* buf = new TCHAR[CLIPBOARD_BUFFER_SIZE];
+		
 		base.GetTextFromClipboard(buf, CLIPBOARD_BUFFER_SIZE);
 
+		BYTE bt[] = {0xFF, 0xFE};
+		file.Write(bt, 2);
 		file.Write(buf, (UINT)((_tcslen(buf) + 1) * sizeof(TCHAR)));
 		delete[] buf;
 		file.Close();
