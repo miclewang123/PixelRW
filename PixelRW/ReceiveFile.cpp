@@ -298,7 +298,7 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 		{
 			uint64_t nFileChecksum = 0;
 			uint32_t nId = 0;
-			int64_t nRemain = file_info.nFileSize;
+			int64_t nRemainder = file_info.nFileSize;
 			m_dlg->Log(_T("Receive file:%s, File size:%lld, check sum:%lld."), file_info.tchFileName, file_info.nFileSize, file_info.nFileCheckSum);
 
 			CFile file;
@@ -330,29 +330,29 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						nFileChecksum += fh->nCheckSum;
 
 						static ULONGLONG oldTickcount = GetTickCount64();
-						static int64_t oldRemainder = nRemain;
+						static int64_t oldRemainder = nRemainder;
 
 						ULONGLONG nTimeDiff = 1 + GetTickCount64() - oldTickcount;
 						if (nTimeDiff > 1000)
 						{
 							TCHAR ch[100];
-							_stprintf_s(ch, 100, _T("Speed:%lldKB,remain:%lldKB."), (oldRemainder - nRemain) / nTimeDiff, nRemain / 1024);
+							_stprintf_s(ch, 100, _T("Speed:%lldKB,remain:%lldKB."), (oldRemainder - nRemainder) / nTimeDiff, nRemainder / 1024);
 							oldTickcount = GetTickCount64();
-							oldRemainder = nRemain;
+							oldRemainder = nRemainder;
 							m_dlg->DisplaySpeed(ch);
 						}
 						
 						file.Write(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
-						nRemain -= fh->nDataSize;
+						nRemainder -= fh->nDataSize;
 
-						m_dlg->Log(_T("Receiving File data id:%d, remain:%lldKB."), fh->nId, nRemain / 1024);
-						if (nRemain == 0)
+						m_dlg->Log(_T("Receiving File data id:%d, remain:%lldKB."), fh->nId, nRemainder / 1024);
+						if (nRemainder == 0)
 						{	
 							Request(REQUEST_COMPLETE);
 							m_dlg->Log(_T("ReceiveFile completed."));
 							break;
 						}
-						else if (nRemain < 0)
+						else if (nRemainder < 0)
 						{
 							m_dlg->Log(_T("ReceiveFile completed. but has error!"));
 							ret = -1;
@@ -372,9 +372,9 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 					ret = -1;
 				}
 
-				if (nRemain > 0)
+				if (nRemainder > 0)
 				{
-					m_dlg->Log(_T("ReceiveFile remain:%lldKB, timeout!"), nRemain / 1024);
+					m_dlg->Log(_T("ReceiveFile remain:%lldKB, timeout!"), nRemainder / 1024);
 					ret = -1;
 				}
 				file.Close();
@@ -446,7 +446,7 @@ int CReceiveFile::GetRGBDataFromScreenRect()
 		for (int32_t j = 0; j < SPLIT_COUNT; j++)
 		{
 			GetRGBDataFromScreenRect(m_rect.left + i * m_rect.Width(), m_rect.top + j * m_rect.Height(), 
-				m_rect.Width(), m_rect.Height(), m_pBuf + (i * SPLIT_COUNT + j) * m_nBufSize, m_nBufSize);
+				m_rect.Width(), m_rect.Height(), m_pBuf + (i * SPLIT_COUNT + j) * m_nBufSize * 3 / 4, m_nBufSize);
 		}
 	}
 

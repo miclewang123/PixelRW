@@ -72,13 +72,12 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 			m_dlg->Log(_T("Sending data block id:%d, DataSize:%d, CheckSum:%d, remainder:%lldKB."), file_info.fh.nId, file_info.fh.nDataSize, file_info.fh.nCheckSum, nRemainder / 1024);
 			m_dlg->Log(_T("Send file : %s, File size:%lld, file check sum:%lld."), file_info.tchFileName, file_info.nFileSize, file_info.nFileCheckSum);
 
-			uint32_t nMaxReadDataLen = m_nBufSize / 4 * 3 * SPLIT_COUNT;
-			BYTE* readBuf = new BYTE[nMaxReadDataLen];
-
 			SetDataToScreenBuf((BYTE*)&file_info, sizeof(file_info_t));
 
+			uint32_t nMaxReadDataLen = m_nBufSize / 4 * 3 * SPLIT_COUNT * SPLIT_COUNT;
+			BYTE* readBuf = new BYTE[nMaxReadDataLen];
+
 			file.SeekToBegin();
-			//m_dlg->Log(_T("Send file begin."));
 			do
 			{
 				ret = IsDataWritable(RW_WAIT_TIMEOUT, nId + 1);
