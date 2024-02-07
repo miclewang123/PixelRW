@@ -313,7 +313,25 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 				strFileName += (ret + 1);
 			}
 
-			if (file.Open(strFileName, CFile::modeCreate | CFile::modeNoTruncate | CFile::modeReadWrite))
+			uint64_t nFilePos = 0;
+			CString strCfgFileName = strFileName + _T(".cfg");
+			nFilePos = GetFilePos(strCfgFileName);
+			
+			BOOL bRet;
+			if (nFilePos)
+			{
+				bRet = file.Open(strFileName, CFile::modeCreate | CFile::modeNoTruncate | CFile::modeReadWrite);
+				if (bRet)
+				{
+					nRemainder -= nFilePos;
+					nFileChecksum += GetFileCheckSum(&file);
+					file.SeekToEnd();
+				}
+			}
+			else
+				bRet = file.Open(strFileName, CFile::modeCreate | CFile::modeReadWrite);
+
+			if (bRet)
 			{	
 				do 
 				{
@@ -323,15 +341,6 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						break;
 					}
 
-					uint64_t nFilePos = 0;
-					if (nId == 0)
-					{
-						CString strCfgFileName = strFileName + _T(".cfg");
-						nFilePos = GetFilePos(strCfgFileName);
-						nRemainder -= nFilePos;
-						nFileChecksum += GetFileCheckSum(&file);
-						file.SeekToEnd();
-					}
 					ret = IsDataReadable(RW_WAIT_TIMEOUT, nId, nFilePos);
 					if (ret == 0)
 					{
@@ -358,7 +367,13 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						if (nRemainder == 0)
 						{
 							CString strCfgFileName = strFileName + _T(".cfg");
-							CFile::Remove(strCfgFileName);
+							try
+							{
+								CFile::Remove(strCfgFileName);
+							}
+							catch (CFileException* pEx)
+							{
+							}
 							Request(REQUEST_COMPLETE);
 							m_dlg->Log(_T("ReceiveFile completed."));
 							break;
