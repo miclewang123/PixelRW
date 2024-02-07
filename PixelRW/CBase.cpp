@@ -78,3 +78,17 @@ uint64_t CBase::CalCheckSum(const BYTE* buf, size_t nBufSize) const
 	}
 	return ret;
 }
+
+uint64_t CBase::GetFileCheckSum(CFile* file) const
+{
+	uint64_t nCheckSum = 0;
+	BYTE buf[4096];
+	file->SeekToBegin();
+	while (1)
+	{
+		UINT nCount = file->Read(buf, 4096);
+		nCheckSum += CalCheckSum(buf, nCount);
+		if (nCount < 4096) break;
+	};
+	return nCheckSum;
+}

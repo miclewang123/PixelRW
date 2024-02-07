@@ -313,7 +313,7 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 				strFileName += (ret + 1);
 			}
 
-			if (file.Open(strFileName, CFile::modeCreate | CFile::modeWrite))
+			if (file.Open(strFileName, CFile::modeCreate | CFile::modeNoTruncate | CFile::modeReadWrite))
 			{	
 				do 
 				{
@@ -323,17 +323,29 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						break;
 					}
 
-					ret = IsDataReadable(RW_WAIT_TIMEOUT, nId);
+					uint64_t nFilePos = 0;
+					if (nId == 0)
+					{
+						CString strCfgFileName = strFileName + _T(".cfg");
+						nFilePos = GetFilePos(strCfgFileName);
+						nRemainder -= nFilePos;
+						nFileChecksum += GetFileCheckSum(&file);
+						file.SeekToEnd();
+					}
+					ret = IsDataReadable(RW_WAIT_TIMEOUT, nId, nFilePos);
 					if (ret == 0)
 					{
 						frame_header_t* fh = (frame_header_t*)m_pBuf;
 						nFileChecksum += fh->nCheckSum;
+						
+						file.Write(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
+						nRemainder -= fh->nDataSize;
 
 						static ULONGLONG oldTickcount = GetTickCount64();
 						static int64_t oldRemainder = nRemainder;
 
 						ULONGLONG nTimeDiff = 1 + GetTickCount64() - oldTickcount;
-						if (nTimeDiff > 1000)
+						if (nTimeDiff > 1000 || nRemainder == 0)
 						{
 							TCHAR ch[100];
 							_stprintf_s(ch, 100, _T("Speed:%lldKB,remain:%lldKB."), (oldRemainder - nRemainder) / nTimeDiff, nRemainder / 1024);
@@ -341,13 +353,12 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 							oldRemainder = nRemainder;
 							m_dlg->DisplaySpeed(ch);
 						}
-						
-						file.Write(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
-						nRemainder -= fh->nDataSize;
 
 						m_dlg->Log(_T("Receiving File data id:%d, remain:%lldKB."), fh->nId, nRemainder / 1024);
 						if (nRemainder == 0)
-						{	
+						{
+							CString strCfgFileName = strFileName + _T(".cfg");
+							CFile::Remove(strCfgFileName);
 							Request(REQUEST_COMPLETE);
 							m_dlg->Log(_T("ReceiveFile completed."));
 							break;
@@ -368,12 +379,15 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 
 				if (nFileChecksum != file_info.nFileCheckSum)
 				{
-					m_dlg->Log(_T("ReceiveFile checksum failed!"));
+					m_dlg->Log(_T("ReceiveFile checksum failed! cal checksum %d, file checksum %d"), nFileChecksum, file_info.nFileCheckSum);
 					ret = -1;
 				}
 
 				if (nRemainder > 0)
 				{
+					CString strCfgFileName = strFileName + _T(".cfg");
+					uint64_t nFilePos = file_info.nFileSize - nRemainder;
+					SaveFilePos(strCfgFileName, nFilePos);
 					m_dlg->Log(_T("ReceiveFile remain:%lldKB, timeout!"), nRemainder / 1024);
 					ret = -1;
 				}
@@ -400,7 +414,36 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 	return ret;
 }
 
-int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId)
+uint64_t CReceiveFile::GetFilePos(LPCTSTR pctszFileName)
+{
+	CFile file;
+	uint64_t nFilePos = 0;
+
+	if (file.Open(pctszFileName, CFile::modeRead))
+	{
+		char buf[40];
+		file.Read(buf, 40);
+		nFilePos = atoll(buf);
+		m_dlg->Log(_T("GetFilePos: %lld"), nFilePos);
+		file.Close();
+	}
+	return nFilePos;
+}
+
+void CReceiveFile::SaveFilePos(LPCTSTR pctszFileName, uint64_t nFilePos)
+{
+	CFile file;
+	if (file.Open(pctszFileName, CFile::modeCreate | CFile::modeWrite))
+	{
+		char buf[40];
+		sprintf_s(buf, 40, "%lld", nFilePos);
+		file.Write(buf, strlen(buf) + 1);
+		m_dlg->Log(_T("SaveFilePos: %S"), buf);
+		file.Close();
+	}
+}
+
+int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId, uint64_t nFilePos)
 {
 	int ret = RET_TIMEOUT;
 	time_t oldTime = time(NULL);
@@ -408,7 +451,7 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId)
 	frame_header_t *fh = (frame_header_t*)m_pBuf;
 	while ((time(NULL) - oldTime) < timeout)
 	{
-		Request(REQUEST_CONTINUE, nId);
+		RequestContinue(nId, nFilePos);
 		GetRGBDataFromScreenRect();
 		if (fh->nId == nId)
 		{
@@ -436,6 +479,7 @@ int  CReceiveFile::GetFileInfo(file_info_t* file_info)
 {
 	int ret = 0;
 	*file_info = *((file_info_t*)m_pBuf);
+	file_info->nLastPos = 0;
 	return ret;
 }
 
@@ -527,11 +571,17 @@ int CReceiveFile::GetRGBDataFromScreenRect(uint32_t nx, uint32_t ny, uint32_t nW
 	return ret;
 }
 
-void CReceiveFile::Request(LPCTSTR pctszRequest, int nId) const
+void CReceiveFile::RequestContinue(int32_t nId, uint64_t nFilePos) const
 {
-	TCHAR tchTmp[20];
-	_stprintf_s(tchTmp, 20, _T("%s%d"), pctszRequest, nId);
+	TCHAR tchTmp[50];
+	_stprintf_s(tchTmp, 50, _T("%s%d,%lld"), REQUEST_CONTINUE, nId, nFilePos);
 
 	CopyToClipboard(tchTmp);
 	m_dlg->Log(_T("Request id:%s to send"), tchTmp);
+}
+
+void CReceiveFile::Request(LPCTSTR pctszRequest) const
+{
+	CopyToClipboard(pctszRequest);
+	m_dlg->Log(_T("Request id:%s to send"), pctszRequest);
 }

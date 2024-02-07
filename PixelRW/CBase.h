@@ -2,8 +2,6 @@
 
 #include "PixelRWDlg.h"
 
-//#define LOCAL_COPY				1
-
 #define REQUEST_CONTINUE			_T("CONTINUE")
 #define REQUEST_RETRY				_T("RETRY")
 #define REQUEST_ERROR				_T("ERROR")
@@ -15,10 +13,7 @@
 #define MIN_RECT_WIDTH				10
 #define MIN_RECT_HEIGHT				10
 
-//#define MAX_RETRY_TIMES			3
-
-#define RET_COMPLETE				2
-#define RET_RETRY					1
+#define RET_COMPLETE				1
 #define RET_NORMAL					0
 #define RET_ERROR					(-1)
 #define RET_TIMEOUT					(-2)
@@ -38,6 +33,7 @@ struct file_info_t
 	
 	uint64_t nFileSize;
 	uint64_t nFileCheckSum;
+	uint64_t nLastPos;
 	TCHAR	 tchFileName[MAX_PATH];
 };
 
@@ -59,6 +55,8 @@ public:
 	bool EmptyClipboard() const;
 	bool GetTextFromClipboard(LPTSTR ptszBuf, size_t nBufSize) const;
 	uint64_t CalCheckSum(const BYTE* buf, size_t nBufSize) const;
+
+	uint64_t GetFileCheckSum(CFile* file) const;
 
 protected:
 	CPixelRWDlg* m_dlg;

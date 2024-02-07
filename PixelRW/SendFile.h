@@ -30,9 +30,7 @@ private:
 	bool SetDataToScreenBuf(BYTE* pData, uint32_t nDataSize) const;
 	void WriteDataToScreen() ;
 
-	uint64_t GetFileCheckSum(CFile* file) const;
-
-	int IsDataWritable(uint32_t timeout, int nId) ;
+	int IsDataWritable(uint32_t timeout, int nId, uint64_t* pnFilePos=NULL) ;
 	int FillRectRed() ;
 
 	bool IsContinue(LPCTSTR pctszText, int nId) const;
@@ -40,6 +38,7 @@ private:
 	bool IsRetry(LPCTSTR pctszText) const;
 	bool IsComplete(LPCTSTR pctszText) const;
 
+	uint64_t GetFilePos(TCHAR *buf);
 
 private:
 	CRect m_rect;			// rect to transfer data

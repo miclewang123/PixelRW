@@ -77,12 +77,17 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 			uint32_t nMaxReadDataLen = m_nBufSize / 4 * 3 * SPLIT_COUNT * SPLIT_COUNT;
 			BYTE* readBuf = new BYTE[nMaxReadDataLen];
 
-			file.SeekToBegin();
 			do
 			{
-				ret = IsDataWritable(RW_WAIT_TIMEOUT, nId + 1);
+				uint64_t nFilePos;
+				ret = IsDataWritable(RW_WAIT_TIMEOUT, nId + 1, &nFilePos);
 				if (ret == 0)
 				{
+					if (nId == -1)
+					{
+						file.Seek(nFilePos, CFile::begin);
+					}
+						
 					frame_header_t fh;
 					fh.nDataSize = file.Read(readBuf + sizeof(frame_header_t), nMaxReadDataLen - sizeof(frame_header_t));
 					fh.nCheckSum = (uint32_t)CalCheckSum(readBuf + sizeof(frame_header_t), fh.nDataSize);
@@ -136,7 +141,14 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 	return ret;
 }
 
-int CSendFile::IsDataWritable(uint32_t timeout, int nId) 
+uint64_t CSendFile::GetFilePos(TCHAR* buf)
+{
+	TCHAR* ret = _tcsrchr(buf, _T(','));
+	uint64_t nPos = _ttoi(ret + 1);
+	return nPos;
+}
+
+int CSendFile::IsDataWritable(uint32_t timeout, int32_t nId, uint64_t *pnFilePos) 
 {
 	//m_dlg->Log(_T("IsDataWritable begin %d"), nId);
 	int ret = RET_TIMEOUT;
@@ -155,6 +167,8 @@ int CSendFile::IsDataWritable(uint32_t timeout, int nId)
 			if (IsContinue(buf, nId))
 			{
 				//m_dlg->Log(_T("Get CONTINUE from receive"));
+				if (nId == 0 && pnFilePos)
+					*pnFilePos = GetFilePos(buf);
 				ret = 0;
 				break;
 			}
@@ -244,20 +258,6 @@ bool CSendFile::SetDataToScreenBuf(BYTE* pData, uint32_t nDataSize) const
 	return true;
 }
 
-uint64_t CSendFile::GetFileCheckSum(CFile* file) const
-{
-	uint64_t nCheckSum = 0;
-	BYTE buf[4096];
-	file->SeekToBegin();
-	while (1)
-	{
-		UINT nCount = file->Read(buf, 4096);
-		nCheckSum += CalCheckSum(buf, nCount);
-		if (nCount < 4096) break;
-	};
-	return nCheckSum;
-}
-
 int CSendFile::FillRectRed() 
 {
 	int ret = 0;
@@ -286,7 +286,7 @@ bool CSendFile::IsContinue(LPCTSTR pctszText, int nId) const
 bool CSendFile::IsError(LPCTSTR pctszText) const
 {
 	bool ret = false;
-	if (_tcsncmp(pctszText, REQUEST_ERROR, _tcslen(REQUEST_ERROR)) == 0)
+	if (_tcscmp(pctszText, REQUEST_ERROR) == 0)
 		ret = true;
 	return ret;
 }
@@ -294,7 +294,7 @@ bool CSendFile::IsError(LPCTSTR pctszText) const
 bool CSendFile::IsComplete(LPCTSTR pctszText) const
 {
 	bool ret = false;
-	if (_tcsncmp(pctszText, REQUEST_COMPLETE, _tcslen(REQUEST_COMPLETE)) == 0)
+	if (_tcscmp(pctszText, REQUEST_COMPLETE) == 0)
 		ret = true;
 	return ret;
 }
@@ -302,7 +302,7 @@ bool CSendFile::IsComplete(LPCTSTR pctszText) const
 bool CSendFile::IsRetry(LPCTSTR pctszText) const
 {
 	bool ret = false;
-	if (_tcsncmp(pctszText, REQUEST_RETRY, _tcslen(REQUEST_RETRY)) == 0)
+	if (_tcscmp(pctszText, REQUEST_RETRY) == 0)
 		ret = true;
 	return ret;
 }

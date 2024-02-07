@@ -22,7 +22,7 @@ CPixelRWDlg::CPixelRWDlg(CWnd* pParent /*=nullptr*/)
 	m_list = NULL;
 	//if(!m_log_file.Open(_T("d:\\log.txt"), CFile::modeCreate | CFile::modeWrite | CFile::typeText))
 	//	m_log_file.Open(_T("d:\\log1.txt"), CFile::modeCreate | CFile::modeWrite | CFile::typeText);
-	
+
 	m_bAbort = FALSE;
 	m_bRunning = FALSE;
 	m_nCharWidth = 0;
@@ -358,9 +358,7 @@ void CPixelRWDlg::OnBnClickedBtnGet()
 		
 		wnd.Attach(hWndCloud);
 		dc_screen = wnd.GetDC();
-		
 	}
-
 	// get pixel RGB
 	COLORREF color = dc_screen->GetPixel(x, y);
 	DWORD err = GetLastError();

@@ -43,11 +43,15 @@ private:
 
 	int  GetFileInfo(file_info_t* file_info) ;
 
-	int IsDataReadable(uint32_t timeout, int32_t nId) ;
+	int IsDataReadable(uint32_t timeout, int32_t nId, uint64_t nFilePos=0) ;
 	int GetRGBDataFromScreenRect() ;
 	int GetRGBDataFromScreenRect(uint32_t nx, uint32_t ny, uint32_t nWidth, uint32_t nHeight, BYTE* pRGBBuf, uint32_t nRGBBufSize) ;
 
-	void Request(LPCTSTR pctszRequest, int nId = 0) const;
+	void RequestContinue(int32_t nId, uint64_t nFilePos=0) const;
+	void Request(LPCTSTR pctszRequest) const;
+
+	uint64_t GetFilePos(LPCTSTR pctszFileName);
+	void SaveFilePos(LPCTSTR pctszFileName, uint64_t nFilePos);
 
 private:
 	CRect	m_rect;			// rect to transfer data
