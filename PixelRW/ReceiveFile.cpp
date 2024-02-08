@@ -308,9 +308,12 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 				strFileName = pctszFileName;
 			else
 			{
-				strFileName = _T("D:\\copy_");
 				TCHAR *ret = _tcsrchr(file_info.tchFileName, _T('\\'));
+				*ret = 0;
+				strFileName = file_info.tchFileName;
+				strFileName += _T("\\Copy_");
 				strFileName += (ret + 1);
+				*ret = _T('\\');
 			}
 
 			uint64_t nFilePos = 0;
