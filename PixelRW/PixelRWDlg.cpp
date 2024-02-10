@@ -237,22 +237,27 @@ void CPixelRWDlg::Log(LPCTSTR strFormat, ...)
 	CString str;
 	str.Format(_T("%lld  %s\n"), t, buf);
 	
-	m_list->InsertString(0, str);
-	
-	//if((HANDLE)m_log_file) m_log_file.WriteString(str);
-
-	static int nMaxStrLen = 0;
-	if (nMaxStrLen < str.GetLength())
+	static CString oldStr;
+	if (oldStr != str)
 	{
-		nMaxStrLen = str.GetLength();
-		m_list->SetHorizontalExtent(nMaxStrLen * m_nCharWidth);
-	}
+		m_list->InsertString(0, str);
+		//if((HANDLE)m_log_file) m_log_file.WriteString(str);
 
-	MSG msg;
-	while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		static int nMaxStrLen = 0;
+		if (nMaxStrLen < str.GetLength())
+		{
+			nMaxStrLen = str.GetLength();
+			m_list->SetHorizontalExtent(nMaxStrLen * m_nCharWidth);
+		}
+
+		MSG msg;
+		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		oldStr = str;
 	}
 
 	delete[] buf;
