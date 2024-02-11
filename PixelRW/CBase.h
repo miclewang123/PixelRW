@@ -58,6 +58,7 @@ public:
 
 	uint64_t GetFileCheckSum(CFile* file) const;
 
+	HWND FindVmWndHandle(LPCTSTR pctszTitle) const;
 protected:
 	CPixelRWDlg* m_dlg;
 };

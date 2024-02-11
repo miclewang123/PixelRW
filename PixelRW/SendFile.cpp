@@ -14,6 +14,8 @@ CSendFile::CSendFile(CPixelRWDlg* dlg, CRect& rect) :CBase(dlg) {
 
 	m_desktop_ctx.hWnd = ::GetDesktopWindow();
 
+	//m_desktop_ctx.hWnd = FindVmWndHandle(_T("Windows 11 x64 - VMware Workstation"));
+
 	m_desktop_ctx.hdc = NULL;
 	m_desktop_ctx.hdcMem = NULL;
 

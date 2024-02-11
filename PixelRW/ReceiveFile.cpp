@@ -11,6 +11,8 @@ CReceiveFile::CReceiveFile(CPixelRWDlg* dlg, CRect& rect) :CBase(dlg) {
 	m_ctx.hdcMem = NULL;
 
 	m_ctx.hWnd = ::GetDesktopWindow();
+	
+	//m_ctx.hWnd = FindVmWndHandle(_T("Windows 11 x64 - VMware Workstation"));
 
 	//#if LOCAL_COPY
 	//	m_ctx.hWnd = ::GetDesktopWindow();
@@ -199,34 +201,6 @@ int CReceiveFile::FindDataRang()
 	return ret;
 }
 
-/**
- *@brief 定EnumWindows()的回调函数。每遍历一个窗口，调用一次。
- *@param[in] hwnd:所获取的句柄。
- *@param[in] lParam:EnumWindows()第二个参数的输入。
- *@return 返回TRUE，EnumWindows()继续遍历窗口。FALSE停止遍历。
- */
-static BOOL CALLBACK EnumWindowsCallback(HWND hwnd, LPARAM lParam)
-{
-	TCHAR windowText[256];
-	GetWindowText(hwnd, windowText, 256);
-	
-	if (_tcslen(windowText) > 6 && _tcsstr(windowText, _T("华为云客户端")) != NULL)
-	{
-		HWND* phWnd = (HWND*)lParam;
-		*phWnd = hwnd;
-		return FALSE;
-	}
-	else
-		return TRUE;
-}
-
-HWND CReceiveFile::FindVmWndHandle(LPCTSTR pctszTitle) const
-{
-	HWND hWndCloud = NULL;
-	EnumWindows(EnumWindowsCallback, (LPARAM)&hWndCloud);
-	return hWndCloud;
-}
-
 void CReceiveFile::InitDC()
 {
 	DeinitDC();
@@ -371,7 +345,7 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 							{
 								CFile::Remove(strCfgFileName);
 							}
-							catch (CFileException* pEx)
+							catch (CFileException*)
 							{
 							}
 							Request(REQUEST_COMPLETE);
@@ -452,7 +426,7 @@ void CReceiveFile::SaveFilePos(LPCTSTR pctszFileName, uint64_t nFilePos)
 	{
 		char buf[40];
 		sprintf_s(buf, 40, "%lld", nFilePos);
-		file.Write(buf, strlen(buf) + 1);
+		file.Write(buf, (UINT)strlen(buf) + 1);
 		m_dlg->Log(_T("SaveFilePos: %S"), buf);
 		file.Close();
 	}
