@@ -66,7 +66,7 @@ protected:
 // problem:
 // 1. remote copy clipboard hWnd must be NULL;
 // 2. remote 大图像无法传输；
-// 3. split has problem;
 
-// 3. local copy must add log info to avoid error.  it is OK now.
-// 4. before use must first run copy/paste manually. it is OK now.
+// 3. split has problem;	it is OK now.
+// 4. local copy must add log info to avoid error.  it is OK now.
+// 5. before use must first run copy/paste manually. it is OK now.
