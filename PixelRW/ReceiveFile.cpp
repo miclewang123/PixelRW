@@ -307,6 +307,9 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 
 			if (bRet)
 			{	
+				ULONGLONG oldTickcount = GetTickCount64();
+				int64_t oldRemainder = nRemainder;
+
 				do 
 				{
 					if (m_dlg->IsAbort())
@@ -323,9 +326,6 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 						
 						file.Write(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
 						nRemainder -= fh->nDataSize;
-
-						static ULONGLONG oldTickcount = GetTickCount64();
-						static int64_t oldRemainder = nRemainder;
 
 						ULONGLONG nTimeDiff = 1 + GetTickCount64() - oldTickcount;
 						if (nTimeDiff > 1000 || nRemainder == 0)
@@ -459,7 +459,7 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId, uint64_t nFilePo
 			}
 		}
 
-		Sleep(10);
+		Sleep(0);
 	};
 	return ret;
 }

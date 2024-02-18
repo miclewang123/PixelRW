@@ -70,7 +70,7 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 			file_info.fh.nCheckSum = (int32_t)CalCheckSum((BYTE*)&file_info + sizeof(frame_header_t), file_info.fh.nDataSize);
 
 			nRemainder = file_info.nFileSize;
-			m_dlg->Log(_T("Sending data block id:%d, DataSize:%d, CheckSum:%d, remainder:%lldKB."), file_info.fh.nId, file_info.fh.nDataSize, file_info.fh.nCheckSum, nRemainder / 1024);
+			m_dlg->Log(_T("Send data block id:%d, DataSize:%d, CheckSum:%d, remainder:%lldKB."), file_info.fh.nId, file_info.fh.nDataSize, file_info.fh.nCheckSum, nRemainder / 1024);
 			m_dlg->Log(_T("Send file : %s, File size:%lld, file check sum:%lld."), file_info.tchFileName, file_info.nFileSize, file_info.nFileCheckSum);
 
 			SetDataToScreenBuf((BYTE*)&file_info, sizeof(file_info_t));
@@ -99,7 +99,7 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 
 					SetDataToScreenBuf(readBuf, fh.nDataSize + sizeof(frame_header_t));
 					nRemainder -= fh.nDataSize;
-					m_dlg->Log(_T("Sending file data id:%d, DataSize:%d, CheckSum:%d, remainder:%lldKB."), fh.nId, fh.nDataSize, fh.nCheckSum, nRemainder / 1024);
+					m_dlg->Log(_T("Send data block id:%d, DataSize:%d, CheckSum:%d, remainder:%lldKB."), fh.nId, fh.nDataSize, fh.nCheckSum, nRemainder / 1024);
 				}
 				else if (ret == RET_ERROR)
 				{
@@ -165,10 +165,8 @@ int CSendFile::IsDataWritable(uint32_t timeout, int32_t nId, uint64_t *pnFilePos
 	
 		if (GetTextFromClipboard(buf, 100))
 		{
-			//m_dlg->Log(_T("IsDataWritable get text %s."), buf);
 			if (IsContinue(buf, nId))
 			{
-				//m_dlg->Log(_T("Get CONTINUE from receive"));
 				if (nId == 0 && pnFilePos)
 					*pnFilePos = GetFilePos(buf);
 				ret = 0;
@@ -190,7 +188,7 @@ int CSendFile::IsDataWritable(uint32_t timeout, int32_t nId, uint64_t *pnFilePos
 				break;
 			}
 		}
-		Sleep(10);
+		Sleep(20);
 	};
 
 	if (ret == RET_TIMEOUT) m_dlg->Log(_T("IsDataWritable timeout, buf: %s!"), buf);

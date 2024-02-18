@@ -476,7 +476,7 @@ void CPixelRWDlg::OnBnClickedBtnTest()
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		Sleep(100);
+		Sleep(10);
 	}
 
 	dc_screen->DeleteDC();
