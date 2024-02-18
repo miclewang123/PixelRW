@@ -237,6 +237,7 @@ void CPixelRWDlg::Log(LPCTSTR strFormat, ...)
 	CString str;
 	str.Format(_T("%lld  %s\n"), t, buf);
 	
+	static ULONGLONG oldTickcount = GetTickCount64();
 	static CString oldStr;
 	if (oldStr != str)
 	{
@@ -250,11 +251,16 @@ void CPixelRWDlg::Log(LPCTSTR strFormat, ...)
 			m_list->SetHorizontalExtent(nMaxStrLen * m_nCharWidth);
 		}
 
-		MSG msg;
-		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+		ULONGLONG nTimeDiff = GetTickCount64() - oldTickcount;
+		if (nTimeDiff > 1000)
 		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			MSG msg;
+			while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+			oldTickcount = GetTickCount64();
 		}
 
 		oldStr = str;
