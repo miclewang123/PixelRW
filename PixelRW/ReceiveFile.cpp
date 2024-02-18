@@ -442,6 +442,7 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId, uint64_t nFilePo
 	while ((time(NULL) - oldTime) < timeout)
 	{
 		RequestContinue(nId, nFilePos);
+		Sleep(0);
 		GetRGBDataFromScreenRect();
 		if (fh->nId == nId)
 		{
@@ -458,8 +459,6 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId, uint64_t nFilePo
 				if (nId != -1)	Request(REQUEST_RETRY);
 			}
 		}
-
-		Sleep(0);
 	};
 	return ret;
 }
@@ -478,7 +477,7 @@ int CReceiveFile::GetRGBDataFromScreenRect()
 	{
 		for (int32_t j = 0; j < SPLIT_COUNT; j++)
 		{
-			GetRGBDataFromScreenRect(m_rect.left + i * m_rect.Width(), m_rect.top + j * m_rect.Height(), 
+			GetRGBDataFromScreenRect(m_rect.left + i * (m_rect.Width() + SPLIT_SNAP), m_rect.top + j * (m_rect.Height() + SPLIT_SNAP),
 				m_rect.Width(), m_rect.Height(), m_pBuf + (i * SPLIT_COUNT + j) * m_nBufSize * 3 / 4, m_nBufSize);
 		}
 	}

@@ -163,6 +163,7 @@ int CSendFile::IsDataWritable(uint32_t timeout, int32_t nId, uint64_t *pnFilePos
 		else
 			WriteDataToScreen();
 	
+		Sleep(0);
 		if (GetTextFromClipboard(buf, 100))
 		{
 			if (IsContinue(buf, nId))
@@ -188,7 +189,7 @@ int CSendFile::IsDataWritable(uint32_t timeout, int32_t nId, uint64_t *pnFilePos
 				break;
 			}
 		}
-		Sleep(20);
+		//Sleep(20);
 	};
 
 	if (ret == RET_TIMEOUT) m_dlg->Log(_T("IsDataWritable timeout, buf: %s!"), buf);
@@ -213,7 +214,7 @@ void CSendFile::WriteDataToScreen()
 			if (ret)
 			{
 				HGDIOBJ oldBitmap = ::SelectObject(m_desktop_ctx.hdcMem, MyBit);
-				::BitBlt(m_desktop_ctx.hdc, m_rect.left + i * m_rect.Width(), m_rect.top + j * m_rect.Height(), 
+				::BitBlt(m_desktop_ctx.hdc, m_rect.left + i * (m_rect.Width() + SPLIT_SNAP), m_rect.top + j * (m_rect.Height() + SPLIT_SNAP),
 					m_rect.Width(), m_rect.Height(), m_desktop_ctx.hdcMem, 0, 0, SRCCOPY);
 				::SelectObject(m_desktop_ctx.hdcMem, oldBitmap);
 				::DeleteObject(MyBit);

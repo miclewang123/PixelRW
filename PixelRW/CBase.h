@@ -19,6 +19,7 @@
 #define RET_TIMEOUT					(-2)
 
 #define	SPLIT_COUNT					1
+#define	SPLIT_SNAP					20
 
 struct frame_header_t
 {
