@@ -363,7 +363,10 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 							nId++;
 					}
 					else
+					{
+						m_dlg->Log(_T("ReceiveFile timeout!"));
 						break;
+					}
 				} while (true);
 
 				if (nFileChecksum != file_info.nFileCheckSum)
@@ -459,6 +462,14 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId, uint64_t nFilePo
 				if (nId != -1)	Request(REQUEST_RETRY);
 			}
 		}
+		else if (fh->nId == nId - 1)
+		{
+
+		}
+		else
+		{
+			m_dlg->Log(_T("IsDataReadable error:  fh id:%d, DataSize:%d"), fh->nId, fh->nDataSize);
+		}
 	};
 	return ret;
 }
@@ -477,7 +488,7 @@ int CReceiveFile::GetRGBDataFromScreenRect()
 	{
 		for (int32_t j = 0; j < SPLIT_COUNT; j++)
 		{
-			GetRGBDataFromScreenRect(m_rect.left + i * (m_rect.Width() + SPLIT_SNAP), m_rect.top + j * (m_rect.Height() + SPLIT_SNAP),
+			GetRGBDataFromScreenRect(m_rect.left + (i * SPLIT_COUNT + j) * (m_rect.Width() + SPLIT_SNAP), m_rect.top + (i * SPLIT_COUNT + j) * (m_rect.Height() + SPLIT_SNAP),
 				m_rect.Width(), m_rect.Height(), m_pBuf + (i * SPLIT_COUNT + j) * m_nBufSize * 3 / 4, m_nBufSize);
 		}
 	}

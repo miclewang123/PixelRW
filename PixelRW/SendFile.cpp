@@ -198,12 +198,12 @@ int CSendFile::IsDataWritable(uint32_t timeout, int32_t nId, uint64_t *pnFilePos
 
 void CSendFile::WriteDataToScreen() 
 {
-	//BYTE buf[4];
-	//buf[0] = m_pBuf[0];
-	//buf[1] = m_pBuf[1];
-	//buf[2] = m_pBuf[2];
-	//buf[3] = m_pBuf[4];
-	//m_dlg->Log(_T("WriteDataToScreen, fh id: %d"), *((int32_t*)buf));
+	BYTE buf[4];
+	buf[0] = m_pBuf[0];
+	buf[1] = m_pBuf[1];
+	buf[2] = m_pBuf[2];
+	buf[3] = m_pBuf[4];
+	m_dlg->Log(_T("WriteDataToScreen, fh id: %d"), *((int32_t*)buf));
 
 	for (int32_t i = 0; i < SPLIT_COUNT; i++)
 	{
@@ -214,7 +214,7 @@ void CSendFile::WriteDataToScreen()
 			if (ret)
 			{
 				HGDIOBJ oldBitmap = ::SelectObject(m_desktop_ctx.hdcMem, MyBit);
-				::BitBlt(m_desktop_ctx.hdc, m_rect.left + i * (m_rect.Width() + SPLIT_SNAP), m_rect.top + j * (m_rect.Height() + SPLIT_SNAP),
+				::BitBlt(m_desktop_ctx.hdc, m_rect.left + (i * SPLIT_COUNT + j)* (m_rect.Width() + SPLIT_SNAP), m_rect.top + (i * SPLIT_COUNT + j) * (m_rect.Height() + SPLIT_SNAP),
 					m_rect.Width(), m_rect.Height(), m_desktop_ctx.hdcMem, 0, 0, SRCCOPY);
 				::SelectObject(m_desktop_ctx.hdcMem, oldBitmap);
 				::DeleteObject(MyBit);
