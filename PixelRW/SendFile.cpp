@@ -45,7 +45,6 @@ void CSendFile::DeinitDC()
 	if (m_desktop_ctx.hdc) {
 		::ReleaseDC(m_desktop_ctx.hWnd, m_desktop_ctx.hdc);
 		m_desktop_ctx.hdc = NULL;
-
 	}
 }
 
@@ -77,6 +76,7 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 			SetDataToScreenBuf((BYTE*)&file_info, sizeof(file_info_t));
 
 			uint32_t nMaxReadDataLen = m_nBufSize / 4 * 3 * SPLIT_COUNT * SPLIT_COUNT;
+			if (nMaxReadDataLen < sizeof(frame_header_t)) nMaxReadDataLen = sizeof(frame_header_t);
 			BYTE* readBuf = new BYTE[nMaxReadDataLen];
 
 			do
@@ -111,7 +111,7 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 					m_dlg->Log(_T("Send file complete!"));
 					break;
 				}
-				else		//timeout
+				else//timeout
 				{
 					m_dlg->Log(_T("Send file data time out!"));
 					break;
@@ -278,8 +278,8 @@ bool CSendFile::IsContinue(LPCTSTR pctszText, int nId) const
 		int num = _ttoi(pctszText + _tcslen(REQUEST_CONTINUE));
 		if (nId == num)
 		{
+			m_dlg->Log(_T("Receive %s"), pctszText);
 			ret = true;
-			m_dlg->Log(_T("Continue send id: %d"), num);
 		}
 	}
 	return ret;
@@ -289,7 +289,11 @@ bool CSendFile::IsError(LPCTSTR pctszText) const
 {
 	bool ret = false;
 	if (_tcscmp(pctszText, REQUEST_ERROR) == 0)
+	{
+		m_dlg->Log(_T("Receive %s"), pctszText);
 		ret = true;
+	}
+	
 	return ret;
 }
 
@@ -297,7 +301,10 @@ bool CSendFile::IsComplete(LPCTSTR pctszText) const
 {
 	bool ret = false;
 	if (_tcscmp(pctszText, REQUEST_COMPLETE) == 0)
+	{
+		m_dlg->Log(_T("Receive %s"), pctszText);
 		ret = true;
+	}
 	return ret;
 }
 
@@ -305,6 +312,9 @@ bool CSendFile::IsRetry(LPCTSTR pctszText) const
 {
 	bool ret = false;
 	if (_tcscmp(pctszText, REQUEST_RETRY) == 0)
+	{
+		m_dlg->Log(_T("Receive %s"), pctszText);
 		ret = true;
+	}
 	return ret;
 }

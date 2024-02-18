@@ -412,6 +412,7 @@ uint64_t CReceiveFile::GetFilePos(LPCTSTR pctszFileName)
 	{
 		char buf[40];
 		file.Read(buf, 40);
+		buf[30] = 0;
 		nFilePos = atoll(buf);
 		m_dlg->Log(_T("GetFilePos: %lld"), nFilePos);
 		file.Close();
@@ -446,8 +447,7 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId, uint64_t nFilePo
 		{
 			m_dlg->Log(_T("fh id:%d, DataSize:%d, CheckSum:%d"), fh->nId, fh->nDataSize, fh->nCheckSum);
 			uint64_t nCalFrameCheckSum = fh->nDataSize > (m_nBufSize * SPLIT_COUNT * SPLIT_COUNT - sizeof(frame_header_t)) ? 0 : CalCheckSum(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
-			uint32_t nCalCheckSum = (uint32_t)nCalFrameCheckSum;
-			if (fh->nCheckSum == nCalCheckSum)
+			if (fh->nCheckSum == (uint32_t)nCalFrameCheckSum)
 			{
 				ret = 0;
 				break;

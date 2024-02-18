@@ -6,7 +6,7 @@ bool CBase::CopyToClipboard(LPCTSTR str) const
 	bool ret = false;
 
 	//if (str && _tcslen(str) > 0 && ::OpenClipboard(AfxGetMainWnd()->GetSafeHwnd()))
-	if (str && _tcslen(str) > 0 && ::OpenClipboard(NULL) /* && ::EmptyClipboard() */)
+	if (str && _tcslen(str) > 0 && ::OpenClipboard(NULL) && ::EmptyClipboard())	// EmptyClipboard() must not be deleted!
 	{
 		uint32_t nStrSize = (uint32_t)(_tcslen(str) + 1) * sizeof(TCHAR);
 		HGLOBAL hBuf = ::GlobalAlloc(GMEM_MOVEABLE, nStrSize);
