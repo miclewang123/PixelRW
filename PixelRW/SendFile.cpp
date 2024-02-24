@@ -166,24 +166,26 @@ uint64_t CSendFile::GetFilePos(TCHAR* buf)
 
 int CSendFile::IsDataWritable(uint32_t timeout, int32_t nId, uint64_t *pnFilePos) 
 {
-	//m_dlg->Log(_T("IsDataWritable begin %d"), nId);
 	int ret = RET_TIMEOUT;
 	TCHAR buf[100] = {0};
 	time_t oldTime = time(NULL);
+
+	if (nId == -1)
+	{
+		FillRectRed();
+	}
+	else
+	{
+		WriteDataToScreen();
+	}
+
 	while ((time(NULL) - oldTime) < timeout)
 	{
-		if (nId == -1)
-			FillRectRed();
-		else
-			WriteDataToScreen();
-	
-		Sleep(0);
 		if (GetTextFromClipboard(buf, 100))
 		{
 			if (IsContinue(buf, nId))
 			{
-				if (nId == 0 && pnFilePos)
-					*pnFilePos = GetFilePos(buf);
+				if (nId == 0 && pnFilePos) *pnFilePos = GetFilePos(buf);
 				ret = 0;
 				break;
 			}
@@ -203,7 +205,17 @@ int CSendFile::IsDataWritable(uint32_t timeout, int32_t nId, uint64_t *pnFilePos
 				break;
 			}
 		}
-		//Sleep(20);
+
+		Sleep(20);
+	
+		if (nId == -1)
+		{
+			FillRectRed();
+		}
+		else
+		{
+			WriteDataToScreen();
+		}
 	};
 
 	if (ret == RET_TIMEOUT) m_dlg->Log(_T("IsDataWritable timeout, buf: %s!"), buf);

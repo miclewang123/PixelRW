@@ -65,7 +65,7 @@ protected:
 };
 
 // problem:
-// 1. remote 大图像无法传输,最大 30*30，但不稳定；
+// 1. remote 大图像无法传输,最大 42*26，但不稳定；
 
 // 2. remote copy clipboard hWnd must be NULL;			it is OK now.
 // 3. split has problem;								it is OK now.
