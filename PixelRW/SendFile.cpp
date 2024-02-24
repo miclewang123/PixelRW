@@ -92,6 +92,20 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 						
 					frame_header_t fh;
 					fh.nDataSize = file.Read(readBuf + sizeof(frame_header_t), nMaxReadDataLen - sizeof(frame_header_t));
+
+					// test
+					//BYTE* pbt= readBuf + sizeof(frame_header_t);
+					//static BYTE c = 0;
+					//c++;
+					//for (int i = 0; i < fh.nDataSize;)
+					//{
+					//	*(pbt + i) = i;
+					//	*(pbt + i + 1) = i;
+					//	*(pbt + i + 2) = i;
+
+					//	i += 3;
+					//}
+
 					fh.nCheckSum = (uint32_t)CalCheckSum(readBuf + sizeof(frame_header_t), fh.nDataSize);
 					nId++;
 					fh.nId = nId;
