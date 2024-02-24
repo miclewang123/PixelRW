@@ -23,6 +23,8 @@
 #define IDC_CHECK_SEND                  1014
 #define IDC_STATIC_SPEED                1015
 #define IDC_BTN_RECEIVE_COPY            1016
+#define IDC_EDIT_FILE_RECEIVE2          1017
+#define IDC_EDIT_PREFIX                 1017
 
 // Next default values for new objects
 // 

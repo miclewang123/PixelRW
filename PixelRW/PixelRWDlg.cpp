@@ -59,12 +59,13 @@ BOOL CPixelRWDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	SetDlgItemInt(IDC_EDIT_X, 100, FALSE);
 	SetDlgItemInt(IDC_EDIT_Y, 100, FALSE);
-	SetDlgItemInt(IDC_EDIT_WIDTH, 20, FALSE);
-	SetDlgItemInt(IDC_EDIT_HEIGHT, 20, FALSE);
+	SetDlgItemInt(IDC_EDIT_WIDTH, 32, FALSE);
+	SetDlgItemInt(IDC_EDIT_HEIGHT, 22, FALSE);
 
 	SetDlgItemInt(IDC_EDIT_X2, 100, FALSE);
 	SetDlgItemInt(IDC_EDIT_Y2, 100, FALSE);
 
+	SetDlgItemText(IDC_EDIT_PREFIX, _T("A"));
 	SetDlgItemText(IDC_EDIT_FILE_SEND, _T("d:\\aaa.zip"));
 	SetDlgItemText(IDC_EDIT_FILE_RECEIVE, _T(""));
 
@@ -132,7 +133,9 @@ void CPixelRWDlg::OnBnClickedBtnSend()
 	rc.right = rc.left + GetDlgItemInt(IDC_EDIT_WIDTH);
 	rc.bottom = rc.top + GetDlgItemInt(IDC_EDIT_HEIGHT);
 	
-	CSendFile sendFile(this, rc);
+	CString strPrefix;
+	this->GetDlgItemText(IDC_EDIT_PREFIX, strPrefix);
+	CSendFile sendFile(this, rc, strPrefix);
 	CString strFile;
 	GetDlgItemText(IDC_EDIT_FILE_SEND, strFile);
 	int ret = sendFile.SendFile(strFile);
@@ -158,7 +161,9 @@ void CPixelRWDlg::OnBnClickedBtnReceive()
 	rc.right = rc.left + GetDlgItemInt(IDC_EDIT_WIDTH);
 	rc.bottom = rc.top + GetDlgItemInt(IDC_EDIT_HEIGHT);
 
-	CReceiveFile recvFile(this, rc);
+	CString strPrefix;
+	this->GetDlgItemText(IDC_EDIT_PREFIX, strPrefix);
+	CReceiveFile recvFile(this, rc, strPrefix);
 
 	CString strFileName;
 	GetDlgItemText(IDC_EDIT_FILE_RECEIVE, strFileName);

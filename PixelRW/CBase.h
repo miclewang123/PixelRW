@@ -2,10 +2,10 @@
 
 #include "PixelRWDlg.h"
 
-#define REQUEST_CONTINUE			_T("CONTINUE")
-#define REQUEST_RETRY				_T("RETRY")
-#define REQUEST_ERROR				_T("ERROR")
-#define REQUEST_COMPLETE			_T("COMPLETE")
+#define REQUEST_CONTINUE			_T("CON")
+#define REQUEST_RETRY				_T("RET")
+#define REQUEST_ERROR				_T("ERR")
+#define REQUEST_COMPLETE			_T("COM")
 
 #define CONNECTION_WAIT_TIMEOUT		6
 #define RW_WAIT_TIMEOUT				4
@@ -48,7 +48,7 @@ struct context_t
 class CBase
 {
 public:
-	CBase(CPixelRWDlg* dlg) { m_dlg = dlg; }
+	CBase(CPixelRWDlg* dlg, LPCTSTR pctszPrefix = NULL) { m_dlg = dlg; if (pctszPrefix) m_strPrefix = pctszPrefix; }
 	virtual ~CBase(){}
 
 public:
@@ -60,8 +60,11 @@ public:
 	uint64_t GetFileCheckSum(CFile* file) const;
 
 	HWND FindVmWndHandle(LPCTSTR pctszTitle) const;
+
+	LPCTSTR GetPrefix() const;
 protected:
 	CPixelRWDlg* m_dlg;
+	CString m_strPrefix;
 };
 
 // problem:

@@ -1,7 +1,7 @@
 ﻿#include "pch.h"
 #include "SendFile.h"
 
-CSendFile::CSendFile(CPixelRWDlg* dlg, CRect& rect) :CBase(dlg) {
+CSendFile::CSendFile(CPixelRWDlg* dlg, CRect& rect, LPCTSTR pctszPrefix) :CBase(dlg, pctszPrefix) {
 	m_rect = rect;
 	m_nBufSize = m_rect.Width() * m_rect.Height() * 4;
 	m_pBuf = new BYTE[m_nBufSize * SPLIT_COUNT * SPLIT_COUNT];
@@ -102,7 +102,6 @@ int CSendFile::SendFile(LPCTSTR pctszFileName)
 					//	*(pbt + i) = i;
 					//	*(pbt + i + 1) = i;
 					//	*(pbt + i + 2) = i;
-
 					//	i += 3;
 					//}
 
@@ -298,9 +297,11 @@ int CSendFile::FillRectRed()
 bool CSendFile::IsContinue(LPCTSTR pctszText, int nId) const
 {
 	bool ret = false;
-	if (_tcsncmp(pctszText, REQUEST_CONTINUE, _tcslen(REQUEST_CONTINUE)) == 0)
+	CString strContinue = GetPrefix();
+	strContinue += REQUEST_CONTINUE;
+	if (_tcsncmp(pctszText, strContinue, _tcslen(strContinue)) == 0)
 	{
-		int num = _ttoi(pctszText + _tcslen(REQUEST_CONTINUE));
+		int num = _ttoi(pctszText + strContinue.GetLength());
 		if (nId == num)
 		{
 			m_dlg->Log(_T("Receive %s"), pctszText);
@@ -313,7 +314,9 @@ bool CSendFile::IsContinue(LPCTSTR pctszText, int nId) const
 bool CSendFile::IsError(LPCTSTR pctszText) const
 {
 	bool ret = false;
-	if (_tcscmp(pctszText, REQUEST_ERROR) == 0)
+	CString strErr = GetPrefix();
+	strErr += REQUEST_ERROR;
+	if (_tcscmp(pctszText, strErr) == 0)
 	{
 		m_dlg->Log(_T("Receive %s"), pctszText);
 		ret = true;
@@ -325,7 +328,9 @@ bool CSendFile::IsError(LPCTSTR pctszText) const
 bool CSendFile::IsComplete(LPCTSTR pctszText) const
 {
 	bool ret = false;
-	if (_tcscmp(pctszText, REQUEST_COMPLETE) == 0)
+	CString strComplete = GetPrefix();
+	strComplete += REQUEST_COMPLETE;
+	if (_tcscmp(pctszText, strComplete) == 0)
 	{
 		m_dlg->Log(_T("Receive %s"), pctszText);
 		ret = true;
@@ -336,7 +341,9 @@ bool CSendFile::IsComplete(LPCTSTR pctszText) const
 bool CSendFile::IsRetry(LPCTSTR pctszText) const
 {
 	bool ret = false;
-	if (_tcscmp(pctszText, REQUEST_RETRY) == 0)
+	CString strRetry = GetPrefix();
+	strRetry += REQUEST_RETRY;
+	if (_tcscmp(pctszText, strRetry) == 0)
 	{
 		m_dlg->Log(_T("Receive %s"), pctszText);
 		ret = true;

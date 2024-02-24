@@ -121,3 +121,7 @@ HWND CBase::FindVmWndHandle(LPCTSTR pctszTitle) const
 	EnumWindows(EnumWindowsCallback, (LPARAM)&hWndCloud);
 	return hWndCloud;
 }
+LPCTSTR CBase::GetPrefix() const
+{
+	return m_strPrefix;
+}

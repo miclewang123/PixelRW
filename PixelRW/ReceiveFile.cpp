@@ -1,7 +1,7 @@
 ﻿#include "pch.h"
 #include "ReceiveFile.h"
 
-CReceiveFile::CReceiveFile(CPixelRWDlg* dlg, CRect& rect) :CBase(dlg) {
+CReceiveFile::CReceiveFile(CPixelRWDlg* dlg, CRect& rect, LPCTSTR pctszPrefix) : CBase(dlg, pctszPrefix) {
 	m_rect = rect;
 
 	m_nBufSize = m_rect.Width() * m_rect.Height() * 4;
@@ -573,7 +573,7 @@ int CReceiveFile::GetRGBDataFromScreenRect(uint32_t nx, uint32_t ny, uint32_t nW
 void CReceiveFile::RequestContinue(int32_t nId, uint64_t nFilePos) const
 {
 	TCHAR tchTmp[50];
-	_stprintf_s(tchTmp, 50, _T("%s%d,%lld"), REQUEST_CONTINUE, nId, nFilePos);
+	_stprintf_s(tchTmp, 50, _T("%s%s%d,%lld"), GetPrefix(), REQUEST_CONTINUE, nId, nFilePos);
 
 	CopyToClipboard(tchTmp);
 	m_dlg->Log(_T("Request id:%s to send"), tchTmp);
@@ -581,6 +581,8 @@ void CReceiveFile::RequestContinue(int32_t nId, uint64_t nFilePos) const
 
 void CReceiveFile::Request(LPCTSTR pctszRequest) const
 {
-	CopyToClipboard(pctszRequest);
-	m_dlg->Log(_T("Request id:%s to send"), pctszRequest);
+	CString strReq = GetPrefix();
+	strReq += pctszRequest;
+	CopyToClipboard(strReq);
+	m_dlg->Log(_T("Request id:%s to send"), strReq);
 }

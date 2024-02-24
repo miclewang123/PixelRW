@@ -17,7 +17,7 @@
 
 class CSendFile : public CBase {
 public:
-	CSendFile(CPixelRWDlg* dlg, CRect& rect);
+	CSendFile(CPixelRWDlg* dlg, CRect& rect, LPCTSTR pctszPrefix=NULL);
 	~CSendFile();
 
 public:
