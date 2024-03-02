@@ -351,6 +351,47 @@ static int GetScreenRectRGB(uint32_t nx, uint32_t ny, uint32_t nWidth, uint32_t 
 	return nWidth * nHeight * 3;
 }
 
+static void WriteDataToWnd(HWND hWnd, const CRect& rect, const BYTE* pbtBuf, uint32_t nBufSize, BOOL bEraseBackground=TRUE)
+{
+	HDC hdcWnd = ::GetDC(hWnd);
+	HDC hdcMem = ::CreateCompatibleDC(hdcWnd);
+	HBITMAP hBitmap = ::CreateCompatibleBitmap(hdcWnd, rect.Width(), rect.Height());
+
+	// make 3bytes to 1 pixel(4bytes)
+	uint32_t nBufSize1 = rect.Width() * rect.Height() * 4;
+	BYTE* pbtBuf1 = new BYTE[nBufSize1];
+	ZeroMemory(pbtBuf1, nBufSize1);
+	uint32_t dst = 0;
+	for (uint32_t src = 0; src < nBufSize;)
+	{
+		memcpy(pbtBuf1 + dst, pbtBuf + src, 3);
+		src += 3;
+		dst += 4;
+	}
+	
+	LONG ret = ::SetBitmapBits(hBitmap, nBufSize1, pbtBuf1);
+	delete[] pbtBuf1;
+	if (ret)
+	{
+		if (bEraseBackground)
+		{
+			CRect rect1 = rect;
+			rect1.right += 20;
+			rect1.bottom += 20;
+			FillRect(hdcWnd, &rect1, CBrush(RGB(255, 255, 255)));
+		}
+		
+		HGDIOBJ hOldBmp = ::SelectObject(hdcMem, hBitmap);
+		::BitBlt(hdcWnd, rect.left, rect.top, rect.Width(), rect.Height(), hdcMem, 0, 0, SRCCOPY);
+
+		::SelectObject(hdcMem, hOldBmp);
+		::DeleteObject(hBitmap);
+	}
+
+	::DeleteObject(hdcMem);
+	::ReleaseDC(hWnd, hdcWnd);
+}
+
 static BOOL CALLBACK EnumWindowsCallback(HWND hwnd, LPARAM lParam)
 {
 	TCHAR windowText[256];
@@ -376,19 +417,37 @@ void CPixelRWDlg::OnBnClickedBtnGet()
 	rc.right = rc.left + GetDlgItemInt(IDC_EDIT_WIDTH);
 	rc.bottom = rc.top + GetDlgItemInt(IDC_EDIT_HEIGHT);
 
-	uint32_t nBufSize = 100 * 100 * 4;
+	uint32_t nBufSize = rc.Width() * rc.Height() * 4;
 	BYTE *pbtBuf = new BYTE[nBufSize];
-	GetScreenRectRGB(rc.left, rc.top, rc.Width(), rc.Height(), pbtBuf, nBufSize);
-	delete[] pbtBuf;
+	nBufSize = GetScreenRectRGB(rc.left, rc.top, rc.Width(), rc.Height(), pbtBuf, nBufSize);
+	
+	CString str;
+	TCHAR tch[10];
+	for (uint32_t i = 0; i <= nBufSize; i++)
+	{
+		_stprintf_s(tch, 10, _T("%02X "), pbtBuf[i]);
+		str += tch;
+	}
+	Log(str);
 
-	//CDC* dc_screen = GetDesktopWindow()->GetWindowDC();
-	// get pixel RGB
-	//COLORREF color = dc_screen->GetPixel(x, y);
-	//DWORD err = GetLastError();
-	//TCHAR buf[100];
-	//_stprintf_s(buf, 100, _T("0X%06X"), color);
-	//SetDlgItemText(IDC_EDIT_COLOR, buf);
-	//dc_screen->DeleteDC();
+
+	for (uint32_t i = 0; i < nBufSize; i++)
+	{
+		if ((BYTE)i != pbtBuf[i])
+			Log(_T("Bitmap error, pos is %d."), i);
+	}
+
+	CRect rect;
+	CWnd *pWndLog = GetDlgItem(IDC_LIST_LOG);
+	pWndLog->GetClientRect(&rect);
+	rect.top = 440;
+	rect.bottom = rect.top + rc.Height();
+	rect.left = 10;
+	rect.right = rect.left + rc.Width();
+
+	WriteDataToWnd(this->GetSafeHwnd(), rect, pbtBuf, nBufSize);
+
+	delete[] pbtBuf;
 }
 
 void CPixelRWDlg::OnBnClickedBtnSet()
@@ -399,20 +458,18 @@ void CPixelRWDlg::OnBnClickedBtnSet()
 	rc.top = GetDlgItemInt(IDC_EDIT_Y);
 	rc.right = rc.left + GetDlgItemInt(IDC_EDIT_WIDTH);
 	rc.bottom = rc.top + GetDlgItemInt(IDC_EDIT_HEIGHT);
-	CDC* dc_screen = GetDesktopWindow()->GetWindowDC();
 
-	//TCHAR buf[100];
-	//GetDlgItemText(IDC_EDIT_COLOR, buf, 100);
-	//TCHAR c[10] = {0};
-	//memcpy(c, buf, 6);
-	//int r = _ttoi(c);
-	//memcpy(c, buf+4, 6);
-	//int g = _ttoi(c);
-	//memcpy(c, buf + 8, 6);
-	//int b = _ttoi(c);
-	//dc_screen->SetPixel(x, y, RGB(r,g,b));
+	byte bt = 0;
+	uint32_t nBufSize = rc.Width() * rc.Height() * 3;
+	BYTE* pbtBuf = new BYTE[nBufSize];
+	for (uint32_t i = 0; i < nBufSize; i++)
+	{
+		pbtBuf[i] = bt++;
+	}
 
-	dc_screen->DeleteDC();
+	WriteDataToWnd(::GetDesktopWindow(), rc, pbtBuf, nBufSize, FALSE);
+
+	delete[] pbtBuf;
 }
 
 void CPixelRWDlg::OnBnClickedBtnTest()
