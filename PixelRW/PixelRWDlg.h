@@ -48,4 +48,5 @@ public:
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedBtnSendCopy();
 	afx_msg void OnBnClickedBtnReceiveCopy();
+	afx_msg void OnEnChangeEditFileSend();
 };

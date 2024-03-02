@@ -44,6 +44,7 @@ BEGIN_MESSAGE_MAP(CPixelRWDlg, CDialogEx)
 	ON_BN_CLICKED(IDCANCEL, &CPixelRWDlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_BTN_SEND_COPY, &CPixelRWDlg::OnBnClickedBtnSendCopy)
 	ON_BN_CLICKED(IDC_BTN_RECEIVE_COPY, &CPixelRWDlg::OnBnClickedBtnReceiveCopy)
+	ON_EN_CHANGE(IDC_EDIT_FILE_SEND, &CPixelRWDlg::OnEnChangeEditFileSend)
 END_MESSAGE_MAP()
 
 // CPixelRWDlg 消息处理程序
@@ -503,4 +504,15 @@ void CPixelRWDlg::OnBnClickedCancel()
 	//m_log_file.Close();
 	
 	CDialogEx::OnCancel();
+}
+
+
+void CPixelRWDlg::OnEnChangeEditFileSend()
+{
+	// TODO:  如果该控件是 RICHEDIT 控件，它将不
+	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
+	// 函数并调用 CRichEditCtrl().SetEventMask()，
+	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
+
+	// TODO:  在此添加控件通知处理程序代码
 }
