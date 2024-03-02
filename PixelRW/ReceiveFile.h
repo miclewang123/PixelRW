@@ -41,8 +41,6 @@ private:
 	bool IsLeftOK(int x, int y, uint32_t nWidth, uint32_t nHeight, BYTE* pRGBBuf, uint32_t nRGBBufSize) const;
 	bool IsUpOK(int x, int y, uint32_t nWidth, uint32_t nHeight, BYTE* pRGBBuf, uint32_t nRGBBufSize) const;
 
-	int  GetFileInfo(file_info_t* file_info) ;
-
 	int IsDataReadable(uint32_t timeout, int32_t nId, uint64_t nFilePos=0) ;
 	int GetRGBDataFromScreenRect() ;
 	int GetRGBDataFromScreenRect(uint32_t nx, uint32_t ny, uint32_t nWidth, uint32_t nHeight, BYTE* pRGBBuf, uint32_t nRGBBufSize) ;

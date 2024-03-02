@@ -263,136 +263,128 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 		m_dlg->Log(_T("connected."));
 		m_dlg->Log(_T("Begin save file:%s"), pctszFileName);
 
-		file_info_t file_info;
-		if (GetFileInfo(&file_info) == 0)
+		file_info_t file_info = *(file_info_t*)m_pBuf;
+		uint64_t nFileChecksum = 0;
+		uint32_t nId = 0;
+		int64_t nRemainder = file_info.nFileSize;
+		m_dlg->Log(_T("Receive file:%s, File size:%lld, check sum:%lld."), file_info.tchFileName, file_info.nFileSize, file_info.nFileCheckSum);
+
+		CFile file;
+		CString strFileName;
+
+		if (pctszFileName && _tcslen(pctszFileName) > 0) 
+			strFileName = pctszFileName;
+		else
 		{
-			uint64_t nFileChecksum = 0;
-			uint32_t nId = 0;
-			int64_t nRemainder = file_info.nFileSize;
-			m_dlg->Log(_T("Receive file:%s, File size:%lld, check sum:%lld."), file_info.tchFileName, file_info.nFileSize, file_info.nFileCheckSum);
+			strFileName = _T("D:\\copy_");
+			TCHAR *ret = _tcsrchr(file_info.tchFileName, _T('\\'));
+			strFileName += (ret + 1);
 
-			CFile file;
-			CString strFileName;
+			m_dlg->SetReceiveFile(strFileName);
+		}
 
-			if (pctszFileName && _tcslen(pctszFileName) > 0) 
-				strFileName = pctszFileName;
-			else
-			{
-				strFileName = _T("D:\\copy_");
-				TCHAR *ret = _tcsrchr(file_info.tchFileName, _T('\\'));
-				strFileName += (ret + 1);
-
-				m_dlg->SetReceiveFile(strFileName);
-			}
-
-			uint64_t nFilePos = 0;
-			CString strCfgFileName = strFileName + _T(".cfg");
-			nFilePos = GetFilePos(strCfgFileName);
+		uint64_t nFilePos = 0;
+		CString strCfgFileName = strFileName + _T(".cfg");
+		nFilePos = GetFilePos(strCfgFileName);
 			
-			BOOL bRet;
-			if (nFilePos)
-			{
-				bRet = file.Open(strFileName, CFile::modeCreate | CFile::modeNoTruncate | CFile::modeReadWrite);
-				if (bRet)
-				{
-					nRemainder -= nFilePos;
-					nFileChecksum += GetFileCheckSum(&file);
-					file.SeekToEnd();
-				}
-			}
-			else
-				bRet = file.Open(strFileName, CFile::modeCreate | CFile::modeReadWrite);
-
+		BOOL bRet;
+		if (nFilePos)
+		{
+			bRet = file.Open(strFileName, CFile::modeCreate | CFile::modeNoTruncate | CFile::modeReadWrite);
 			if (bRet)
-			{	
-				ULONGLONG oldTickcount = GetTickCount64();
-				int64_t oldRemainder = nRemainder;
+			{
+				nRemainder -= nFilePos;
+				nFileChecksum += GetFileCheckSum(&file);
+				file.SeekToEnd();
+			}
+		}
+		else
+			bRet = file.Open(strFileName, CFile::modeCreate | CFile::modeReadWrite);
 
-				do 
+		if (bRet)
+		{	
+			ULONGLONG oldTickcount = GetTickCount64();
+			int64_t oldRemainder = nRemainder;
+
+			do 
+			{
+				if (m_dlg->IsAbort())
 				{
-					if (m_dlg->IsAbort())
+					ret = -1;
+					break;
+				}
+
+				ret = IsDataReadable(RW_WAIT_TIMEOUT, nId, nFilePos);
+				if (ret == 0)
+				{
+					frame_header_t* fh = (frame_header_t*)m_pBuf;
+					nFileChecksum += fh->nCheckSum;
+						
+					file.Write(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
+					nRemainder -= fh->nDataSize;
+
+					ULONGLONG nTimeDiff = 1 + GetTickCount64() - oldTickcount;
+					if (nTimeDiff > 1000 || nRemainder == 0)
 					{
-						ret = -1;
-						break;
+						TCHAR ch[100];
+						_stprintf_s(ch, 100, _T("Speed:%lldKB,remain:%lldKB."), (oldRemainder - nRemainder) / nTimeDiff, nRemainder / 1024);
+						oldTickcount = GetTickCount64();
+						oldRemainder = nRemainder;
+						m_dlg->DisplaySpeed(ch);
 					}
 
-					ret = IsDataReadable(RW_WAIT_TIMEOUT, nId, nFilePos);
-					if (ret == 0)
+					m_dlg->Log(_T("Receiving File data id:%d, remain:%lldKB."), fh->nId, nRemainder / 1024);
+					if (nRemainder == 0)
 					{
-						frame_header_t* fh = (frame_header_t*)m_pBuf;
-						nFileChecksum += fh->nCheckSum;
-						
-						file.Write(m_pBuf + sizeof(frame_header_t), fh->nDataSize);
-						nRemainder -= fh->nDataSize;
-
-						ULONGLONG nTimeDiff = 1 + GetTickCount64() - oldTickcount;
-						if (nTimeDiff > 1000 || nRemainder == 0)
+						CString strCfgFileName = strFileName + _T(".cfg");
+						try
 						{
-							TCHAR ch[100];
-							_stprintf_s(ch, 100, _T("Speed:%lldKB,remain:%lldKB."), (oldRemainder - nRemainder) / nTimeDiff, nRemainder / 1024);
-							oldTickcount = GetTickCount64();
-							oldRemainder = nRemainder;
-							m_dlg->DisplaySpeed(ch);
+							CFile::Remove(strCfgFileName);
 						}
-
-						m_dlg->Log(_T("Receiving File data id:%d, remain:%lldKB."), fh->nId, nRemainder / 1024);
-						if (nRemainder == 0)
+						catch (CFileException*)
 						{
-							CString strCfgFileName = strFileName + _T(".cfg");
-							try
-							{
-								CFile::Remove(strCfgFileName);
-							}
-							catch (CFileException*)
-							{
-							}
-							Request(REQUEST_COMPLETE);
-							m_dlg->Log(_T("ReceiveFile completed."));
-							break;
 						}
-						else if (nRemainder < 0)
-						{
-							m_dlg->Log(_T("ReceiveFile completed. but has error!"));
-							ret = -1;
-							Request(REQUEST_ERROR);
-							break;
-						}
-						else
-							nId++;
+						Request(REQUEST_COMPLETE);
+						m_dlg->Log(_T("ReceiveFile completed."));
+						break;
+					}
+					else if (nRemainder < 0)
+					{
+						m_dlg->Log(_T("ReceiveFile completed. but has error!"));
+						ret = -1;
+						Request(REQUEST_ERROR);
+						break;
 					}
 					else
-					{
-						m_dlg->Log(_T("ReceiveFile timeout!"));
-						break;
-					}
-				} while (true);
-
-				if (nFileChecksum != file_info.nFileCheckSum)
-				{
-					m_dlg->Log(_T("ReceiveFile checksum failed! cal checksum %d, file checksum %d"), nFileChecksum, file_info.nFileCheckSum);
-					ret = -1;
+						nId++;
 				}
-
-				if (nRemainder > 0)
+				else
 				{
-					CString strCfgFileName = strFileName + _T(".cfg");
-					uint64_t nFilePos = file_info.nFileSize - nRemainder;
-					SaveFilePos(strCfgFileName, nFilePos);
-					m_dlg->Log(_T("ReceiveFile remain:%lldKB, timeout!"), nRemainder / 1024);
-					ret = -1;
+					m_dlg->Log(_T("ReceiveFile timeout!"));
+					break;
 				}
-				file.Close();
-			}
-			else
+			} while (true);
+
+			if (nFileChecksum != file_info.nFileCheckSum)
 			{
+				m_dlg->Log(_T("ReceiveFile checksum failed! cal checksum %d, file checksum %d"), nFileChecksum, file_info.nFileCheckSum);
 				ret = -1;
-				m_dlg->Log(_T("Open Receive File: %s failed."), strFileName);
 			}
+
+			if (nRemainder > 0)
+			{
+				CString strCfgFileName = strFileName + _T(".cfg");
+				uint64_t nFilePos = file_info.nFileSize - nRemainder;
+				SaveFilePos(strCfgFileName, nFilePos);
+				m_dlg->Log(_T("ReceiveFile remain:%lldKB, timeout!"), nRemainder / 1024);
+				ret = -1;
+			}
+			file.Close();
 		}
 		else
 		{
 			ret = -1;
-			m_dlg->Log(_T("Receive file: get log file info error!"));
+			m_dlg->Log(_T("Open Receive File: %s failed."), strFileName);
 		}
 		Disconnect();
 	}
@@ -469,14 +461,6 @@ int CReceiveFile::IsDataReadable(uint32_t timeout, int32_t nId, uint64_t nFilePo
 			m_dlg->Log(_T("IsDataReadable error:  fh id:%d, DataSize:%d"), fh->nId, fh->nDataSize);
 		}
 	};
-	return ret;
-}
-
-int  CReceiveFile::GetFileInfo(file_info_t* file_info) 
-{
-	int ret = 0;
-	*file_info = *((file_info_t*)m_pBuf);
-	file_info->nLastPos = 0;
 	return ret;
 }
 
