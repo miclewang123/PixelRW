@@ -12,7 +12,8 @@ CSendFile::CSendFile(CPixelRWDlg* dlg, CRect& rect, LPCTSTR pctszPrefix) :CBase(
 	_stprintf_s(tchBuf, 200, _T("RECT Left top, right bottom %d %d %d %d\n"), m_rect.left, m_rect.top, m_rect.right, m_rect.bottom);
 	m_dlg->Log(tchBuf);
 
-	m_desktop_ctx.hWnd = ::GetDesktopWindow();
+	//m_desktop_ctx.hWnd = ::GetDesktopWindow();
+	m_desktop_ctx.hWnd = m_dlg->GetSafeHwnd();
 
 	//m_desktop_ctx.hWnd = FindVmWndHandle(_T("Windows 11 x64 - VMware Workstation"));
 
@@ -204,9 +205,7 @@ int CSendFile::IsDataWritable(uint32_t timeout, int32_t nId, uint64_t *pnFilePos
 				break;
 			}
 		}
-
-		Sleep(20);
-	
+		//Sleep(20);
 		if (nId == -1)
 		{
 			FillRectRed();
@@ -239,16 +238,17 @@ void CSendFile::WriteDataToScreen()
 			if (ret)
 			{
 				HGDIOBJ oldBitmap = ::SelectObject(m_desktop_ctx.hdcMem, MyBit);
-				::BitBlt(m_desktop_ctx.hdc, m_rect.left + (i * SPLIT_COUNT + j)* (m_rect.Width() + SPLIT_SNAP), m_rect.top + (i * SPLIT_COUNT + j) * (m_rect.Height() + SPLIT_SNAP),
+				::BitBlt(m_desktop_ctx.hdc, m_rect.left + j * (m_rect.Width() + SPLIT_SNAP), m_rect.top + i * (m_rect.Height() + SPLIT_SNAP),
 					m_rect.Width(), m_rect.Height(), m_desktop_ctx.hdcMem, 0, 0, SRCCOPY);
 				::SelectObject(m_desktop_ctx.hdcMem, oldBitmap);
 				::DeleteObject(MyBit);
+				Sleep(20);
 			}
 			else
 				m_dlg->Log(_T("WriteDataToScreen Error"));
 		}
 	}
-
+	//Sleep(100);
 	//HBITMAP MyBit = ::CreateCompatibleBitmap(m_desktop_ctx.hdc, m_rect.Width(), m_rect.Height());
 	//LONG ret = ::SetBitmapBits(MyBit, m_nBufSize, m_pBuf);
 	//if (ret)

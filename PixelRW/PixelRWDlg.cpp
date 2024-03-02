@@ -419,8 +419,9 @@ void CPixelRWDlg::OnBnClickedBtnGet()
 
 	uint32_t nBufSize = rc.Width() * rc.Height() * 4;
 	BYTE *pbtBuf = new BYTE[nBufSize];
-	nBufSize = GetScreenRectRGB(rc.left, rc.top, rc.Width(), rc.Height(), pbtBuf, nBufSize);
 	
+	// 1
+	nBufSize = GetScreenRectRGB(rc.left, rc.top, rc.Width(), rc.Height(), pbtBuf, nBufSize);
 	CString str;
 	TCHAR tch[10];
 	for (uint32_t i = 0; i <= nBufSize; i++)
@@ -430,10 +431,9 @@ void CPixelRWDlg::OnBnClickedBtnGet()
 	}
 	Log(str);
 
-
 	for (uint32_t i = 0; i < nBufSize; i++)
 	{
-		if ((BYTE)i != pbtBuf[i])
+		if (i > 0 && (BYTE(pbtBuf[i] - pbtBuf[i - 1])) != 1)
 			Log(_T("Bitmap error, pos is %d."), i);
 	}
 
@@ -444,8 +444,30 @@ void CPixelRWDlg::OnBnClickedBtnGet()
 	rect.bottom = rect.top + rc.Height();
 	rect.left = 10;
 	rect.right = rect.left + rc.Width();
-
 	WriteDataToWnd(this->GetSafeHwnd(), rect, pbtBuf, nBufSize);
+
+	// 2
+	/*rc.left += 100;
+	rc.right += 100;
+	nBufSize = rc.Width() * rc.Height() * 4;
+	nBufSize = GetScreenRectRGB(rc.left, rc.top, rc.Width(), rc.Height(), pbtBuf, nBufSize);
+	str = "";
+	for (uint32_t i = 0; i <= nBufSize; i++)
+	{
+		_stprintf_s(tch, 10, _T("%02X "), pbtBuf[i]);
+		str += tch;
+	}
+	Log(str);
+
+	for (uint32_t i = 0; i < nBufSize; i++)
+	{
+		if (i > 0 && (BYTE(pbtBuf[i] - pbtBuf[i - 1])) != 1)
+			Log(_T("Bitmap error, pos is %d."), i);
+	}
+	
+	rect.left = 100;
+	rect.right = rect.left + rc.Width();
+	WriteDataToWnd(this->GetSafeHwnd(), rect, pbtBuf, nBufSize);*/
 
 	delete[] pbtBuf;
 }
@@ -459,16 +481,27 @@ void CPixelRWDlg::OnBnClickedBtnSet()
 	rc.right = rc.left + GetDlgItemInt(IDC_EDIT_WIDTH);
 	rc.bottom = rc.top + GetDlgItemInt(IDC_EDIT_HEIGHT);
 
-	byte bt = 0;
+	static byte bt = 0;
 	uint32_t nBufSize = rc.Width() * rc.Height() * 3;
 	BYTE* pbtBuf = new BYTE[nBufSize];
+	
+	// 1
 	for (uint32_t i = 0; i < nBufSize; i++)
 	{
 		pbtBuf[i] = bt++;
 	}
+	//WriteDataToWnd(::GetDesktopWindow(), rc, pbtBuf, nBufSize, FALSE);
+	WriteDataToWnd(GetSafeHwnd(), rc, pbtBuf, nBufSize, FALSE);
 
+	// 2
+	/*for (uint32_t i = 0; i < nBufSize; i++)
+	{
+		pbtBuf[i] = bt++;
+	}
+	rc.left += 100;
+	rc.right += 100;
 	WriteDataToWnd(::GetDesktopWindow(), rc, pbtBuf, nBufSize, FALSE);
-
+	*/
 	delete[] pbtBuf;
 }
 
@@ -517,8 +550,6 @@ void CPixelRWDlg::OnBnClickedBtnTest()
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-
-		//Sleep(1000);
 		
 		c = dc_screen->SetPixel(x, y, RGB(0xff, 0xff, 0xff));
 		str.Format(_T("%06X"), c);

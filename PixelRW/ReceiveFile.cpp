@@ -470,7 +470,7 @@ int CReceiveFile::GetRGBDataFromScreenRect()
 	{
 		for (int32_t j = 0; j < SPLIT_COUNT; j++)
 		{
-			GetRGBDataFromScreenRect(m_rect.left + (i * SPLIT_COUNT + j) * (m_rect.Width() + SPLIT_SNAP), m_rect.top + (i * SPLIT_COUNT + j) * (m_rect.Height() + SPLIT_SNAP),
+			GetRGBDataFromScreenRect(m_rect.left + j * (m_rect.Width() + SPLIT_SNAP), m_rect.top + i * (m_rect.Height() + SPLIT_SNAP),
 				m_rect.Width(), m_rect.Height(), m_pBuf + (i * SPLIT_COUNT + j) * m_nBufSize * 3 / 4, m_nBufSize);
 		}
 	}
