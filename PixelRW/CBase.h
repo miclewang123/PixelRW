@@ -10,8 +10,8 @@
 #define CONNECTION_WAIT_TIMEOUT		6
 #define RW_WAIT_TIMEOUT				4
 
-#define MIN_RECT_WIDTH				10
-#define MIN_RECT_HEIGHT				10
+#define MIN_RECT_WIDTH				8
+#define MIN_RECT_HEIGHT				8
 
 #define RET_COMPLETE				1
 #define RET_NORMAL					0

@@ -1,12 +1,7 @@
 ﻿#include "pch.h"
 #include "ReceiveFile.h"
 
-CReceiveFile::CReceiveFile(CPixelRWDlg* dlg, CRect& rect, LPCTSTR pctszPrefix) : CBase(dlg, pctszPrefix) {
-	m_rect = rect;
-
-	m_nBufSize = m_rect.Width() * m_rect.Height() * 4;
-	m_pBuf = new BYTE[m_nBufSize * SPLIT_COUNT * SPLIT_COUNT];
-
+CReceiveFile::CReceiveFile(CPixelRWDlg* dlg, LPCTSTR pctszPrefix) : CBase(dlg, pctszPrefix) {
 	m_ctx.hdc = NULL;
 	m_ctx.hdcMem = NULL;
 
@@ -195,8 +190,9 @@ int CReceiveFile::FindDataRang()
 			}
 		}
 	}
-
 	delete[] pRGBBuf;
+
+	if (ret == 0) m_dlg->SetReceiveRange(m_rect);
 
 	return ret;
 }
@@ -285,6 +281,8 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 				strFileName = _T("D:\\copy_");
 				TCHAR *ret = _tcsrchr(file_info.tchFileName, _T('\\'));
 				strFileName += (ret + 1);
+
+				m_dlg->SetReceiveFile(strFileName);
 			}
 
 			uint64_t nFilePos = 0;

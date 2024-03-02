@@ -4,6 +4,7 @@
 
 #pragma once
 
+#define USE_FILELOG
 
 // CPixelRWDlg 对话框
 class CPixelRWDlg : public CDialogEx
@@ -26,8 +27,9 @@ protected:
 	UINT m_nCharWidth;
 	BOOL m_bAbort;
 	BOOL m_bRunning;
-	//CStdioFile m_log_file;
-
+#ifdef USE_FILELOG
+	CStdioFile m_log_file;
+#endif
 	// 生成的消息映射函数
 	virtual BOOL OnInitDialog();
 	afx_msg void OnPaint();
@@ -39,6 +41,7 @@ public:
 	void Log(LPCTSTR str, ...);
 	void SetReceiveFile(LPCTSTR strFileName);
 	void DisplaySpeed(LPCTSTR str);
+	void SetReceiveRange(CRect& rect);
 
 	afx_msg void OnBnClickedBtnSend();
 	afx_msg void OnBnClickedBtnReceive();
@@ -46,7 +49,6 @@ public:
 	afx_msg void OnBnClickedBtnSet();
 	afx_msg void OnBnClickedBtnTest();
 	afx_msg void OnBnClickedCancel();
-	afx_msg void OnBnClickedBtnSendCopy();
-	afx_msg void OnBnClickedBtnReceiveCopy();
-	afx_msg void OnEnChangeEditFileSend();
+	afx_msg void OnBnClickedBtnCopy();
+	afx_msg void OnBnClickedBtnPaste();
 };

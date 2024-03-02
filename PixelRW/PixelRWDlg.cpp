@@ -20,9 +20,10 @@ CPixelRWDlg::CPixelRWDlg(CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_list = NULL;
-	//if(!m_log_file.Open(_T("d:\\log.txt"), CFile::modeCreate | CFile::modeWrite | CFile::typeText))
-	//	m_log_file.Open(_T("d:\\log1.txt"), CFile::modeCreate | CFile::modeWrite | CFile::typeText);
-
+#ifdef USE_FILELOG
+	if(!m_log_file.Open(_T("log.txt"), CFile::modeCreate | CFile::modeWrite | CFile::typeText))
+		m_log_file.Open(_T("log1.txt"), CFile::modeCreate | CFile::modeWrite | CFile::typeText);
+#endif
 	m_bAbort = FALSE;
 	m_bRunning = FALSE;
 	m_nCharWidth = 0;
@@ -42,9 +43,8 @@ BEGIN_MESSAGE_MAP(CPixelRWDlg, CDialogEx)
 	ON_BN_CLICKED(ID_BTN_SET, &CPixelRWDlg::OnBnClickedBtnSet)
 	ON_BN_CLICKED(ID_BTN_TEST, &CPixelRWDlg::OnBnClickedBtnTest)
 	ON_BN_CLICKED(IDCANCEL, &CPixelRWDlg::OnBnClickedCancel)
-	ON_BN_CLICKED(IDC_BTN_SEND_COPY, &CPixelRWDlg::OnBnClickedBtnSendCopy)
-	ON_BN_CLICKED(IDC_BTN_RECEIVE_COPY, &CPixelRWDlg::OnBnClickedBtnReceiveCopy)
-	ON_EN_CHANGE(IDC_EDIT_FILE_SEND, &CPixelRWDlg::OnEnChangeEditFileSend)
+	ON_BN_CLICKED(IDC_BTN_SEND_COPY, &CPixelRWDlg::OnBnClickedBtnCopy)
+	ON_BN_CLICKED(IDC_BTN_RECEIVE_COPY, &CPixelRWDlg::OnBnClickedBtnPaste)
 END_MESSAGE_MAP()
 
 // CPixelRWDlg 消息处理程序
@@ -62,9 +62,6 @@ BOOL CPixelRWDlg::OnInitDialog()
 	SetDlgItemInt(IDC_EDIT_Y, 100, FALSE);
 	SetDlgItemInt(IDC_EDIT_WIDTH, 32, FALSE);
 	SetDlgItemInt(IDC_EDIT_HEIGHT, 22, FALSE);
-
-	SetDlgItemInt(IDC_EDIT_X2, 100, FALSE);
-	SetDlgItemInt(IDC_EDIT_Y2, 100, FALSE);
 
 	SetDlgItemText(IDC_EDIT_PREFIX, _T("A"));
 	SetDlgItemText(IDC_EDIT_FILE_SEND, _T("d:\\aaa.zip"));
@@ -124,7 +121,7 @@ void CPixelRWDlg::OnBnClickedBtnSend()
 	m_bAbort = FALSE;
 	m_bRunning = TRUE;
 
-	((CButton*)GetDlgItem(IDC_CHECK_SEND))->SetCheck(TRUE);
+	//((CButton*)GetDlgItem(IDC_CHECK_SEND))->SetCheck(TRUE);
 	GetDlgItem(IDC_BTN_SEND)->EnableWindow(FALSE);
 	m_list->ResetContent();
 
@@ -156,15 +153,9 @@ void CPixelRWDlg::OnBnClickedBtnReceive()
 	GetDlgItem(IDC_BTN_RECEIVE)->EnableWindow(FALSE);
 	m_list->ResetContent();
 
-	CRect rc;
-	rc.left = GetDlgItemInt(IDC_EDIT_X);
-	rc.top = GetDlgItemInt(IDC_EDIT_Y);
-	rc.right = rc.left + GetDlgItemInt(IDC_EDIT_WIDTH);
-	rc.bottom = rc.top + GetDlgItemInt(IDC_EDIT_HEIGHT);
-
 	CString strPrefix;
 	this->GetDlgItemText(IDC_EDIT_PREFIX, strPrefix);
-	CReceiveFile recvFile(this, rc, strPrefix);
+	CReceiveFile recvFile(this, strPrefix);
 
 	CString strFileName;
 	GetDlgItemText(IDC_EDIT_FILE_RECEIVE, strFileName);
@@ -179,7 +170,7 @@ void CPixelRWDlg::OnBnClickedBtnReceive()
 
 #define CLIPBOARD_BUFFER_SIZE		1024 * 1024 * 4
 
-void CPixelRWDlg::OnBnClickedBtnSendCopy()
+void CPixelRWDlg::OnBnClickedBtnCopy()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	CString strFileName = _T("D:\\copy.txt");
@@ -203,7 +194,7 @@ void CPixelRWDlg::OnBnClickedBtnSendCopy()
 	}
 }
 
-void CPixelRWDlg::OnBnClickedBtnReceiveCopy()
+void CPixelRWDlg::OnBnClickedBtnPaste()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	CString strFileName = _T("D:\\copy.txt");
@@ -248,8 +239,9 @@ void CPixelRWDlg::Log(LPCTSTR strFormat, ...)
 	if (oldStr != str)
 	{
 		m_list->InsertString(0, str);
-		//if((HANDLE)m_log_file) m_log_file.WriteString(str);
-
+#ifdef USE_FILELOG
+		if((HANDLE)m_log_file) m_log_file.WriteString(str);
+#endif
 		static int nMaxStrLen = 0;
 		if (nMaxStrLen < str.GetLength())
 		{
@@ -291,6 +283,26 @@ void CPixelRWDlg::DisplaySpeed(LPCTSTR str)
 		DispatchMessage(&msg);
 	}
 }
+
+void CPixelRWDlg::OnBnClickedCancel()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_bAbort = TRUE;
+	if (m_bRunning) return;
+#ifdef USE_FILELOG
+	m_log_file.Close();
+#endif
+	CDialogEx::OnCancel();
+}
+
+void CPixelRWDlg::SetReceiveRange(CRect& rect)
+{
+	SetDlgItemInt(IDC_EDIT_X, rect.left, FALSE);
+	SetDlgItemInt(IDC_EDIT_Y, rect.top, FALSE);
+	SetDlgItemInt(IDC_EDIT_WIDTH, rect.Width(), FALSE);
+	SetDlgItemInt(IDC_EDIT_HEIGHT, rect.Height(), FALSE);
+}
+
 ////////////////////////////////////////////// test //////////////////////////////////////////
 static int GetScreenRectRGB(uint32_t nx, uint32_t ny, uint32_t nWidth, uint32_t nHeight, BYTE* pRGBBuf, uint32_t nRGBBufSize)
 {
@@ -358,75 +370,47 @@ static BOOL CALLBACK EnumWindowsCallback(HWND hwnd, LPARAM lParam)
 void CPixelRWDlg::OnBnClickedBtnGet()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	uint32_t x = GetDlgItemInt(IDC_EDIT_X2);
-	uint32_t y = GetDlgItemInt(IDC_EDIT_Y2);
-	BOOL bSend = ((CButton*)GetDlgItem(IDC_CHECK_SEND))->GetCheck();
-	//initial
-	CDC* dc_screen;
-	CWnd wnd;
-	if (bSend)
-	{
-		dc_screen = GetDesktopWindow()->GetWindowDC();
-	}
-	else
-	{
-		HWND hWndCloud = NULL;
-		EnumWindows(EnumWindowsCallback, (LPARAM)&hWndCloud);
-		
-		wnd.Attach(hWndCloud);
-		dc_screen = wnd.GetDC();
-	}
-	// get pixel RGB
-	COLORREF color = dc_screen->GetPixel(x, y);
-	DWORD err = GetLastError();
-	TCHAR buf[100];
-	_stprintf_s(buf, 100, _T("0X%06X"), color);
-	SetDlgItemText(IDC_EDIT_COLOR, buf);
+	CRect rc;
+	rc.left = GetDlgItemInt(IDC_EDIT_X);
+	rc.top = GetDlgItemInt(IDC_EDIT_Y);
+	rc.right = rc.left + GetDlgItemInt(IDC_EDIT_WIDTH);
+	rc.bottom = rc.top + GetDlgItemInt(IDC_EDIT_HEIGHT);
 
-	dc_screen->DeleteDC();
-	if(!bSend) wnd.Detach();
+	uint32_t nBufSize = 100 * 100 * 4;
+	BYTE *pbtBuf = new BYTE[nBufSize];
+	GetScreenRectRGB(rc.left, rc.top, rc.Width(), rc.Height(), pbtBuf, nBufSize);
+	delete[] pbtBuf;
+
+	//CDC* dc_screen = GetDesktopWindow()->GetWindowDC();
+	// get pixel RGB
+	//COLORREF color = dc_screen->GetPixel(x, y);
+	//DWORD err = GetLastError();
+	//TCHAR buf[100];
+	//_stprintf_s(buf, 100, _T("0X%06X"), color);
+	//SetDlgItemText(IDC_EDIT_COLOR, buf);
+	//dc_screen->DeleteDC();
 }
 
 void CPixelRWDlg::OnBnClickedBtnSet()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	uint32_t x = GetDlgItemInt(IDC_EDIT_X2);
-	uint32_t y = GetDlgItemInt(IDC_EDIT_Y2);
+	CRect rc;
+	rc.left = GetDlgItemInt(IDC_EDIT_X);
+	rc.top = GetDlgItemInt(IDC_EDIT_Y);
+	rc.right = rc.left + GetDlgItemInt(IDC_EDIT_WIDTH);
+	rc.bottom = rc.top + GetDlgItemInt(IDC_EDIT_HEIGHT);
+	CDC* dc_screen = GetDesktopWindow()->GetWindowDC();
 
-	BOOL bSend = ((CButton*)GetDlgItem(IDC_CHECK_SEND))->GetCheck();
-	CDC* dc_screen;
-	if (bSend)
-	{
-		dc_screen = GetDesktopWindow()->GetWindowDC();
-	}
-	else
-	{
-		HWND hWndCloud = NULL;
-		EnumWindows(EnumWindowsCallback, (LPARAM)&hWndCloud);
-		if (hWndCloud)
-		{
-			CWnd wnd;
-			wnd.Attach(hWndCloud);
-			dc_screen = wnd.GetDC();
-			wnd.Detach();
-		}
-		else
-		{
-			ASSERT(FALSE);
-			return;
-		}
-	}
-
-	TCHAR buf[100];
-	GetDlgItemText(IDC_EDIT_COLOR, buf, 100);
-	TCHAR c[10] = {0};
-	memcpy(c, buf, 6);
-	int r = _ttoi(c);
-	memcpy(c, buf+4, 6);
-	int g = _ttoi(c);
-	memcpy(c, buf + 8, 6);
-	int b = _ttoi(c);
-	dc_screen->SetPixel(x, y, RGB(r,g,b));
+	//TCHAR buf[100];
+	//GetDlgItemText(IDC_EDIT_COLOR, buf, 100);
+	//TCHAR c[10] = {0};
+	//memcpy(c, buf, 6);
+	//int r = _ttoi(c);
+	//memcpy(c, buf+4, 6);
+	//int g = _ttoi(c);
+	//memcpy(c, buf + 8, 6);
+	//int b = _ttoi(c);
+	//dc_screen->SetPixel(x, y, RGB(r,g,b));
 
 	dc_screen->DeleteDC();
 }
@@ -494,25 +478,4 @@ void CPixelRWDlg::OnBnClickedBtnTest()
 	dc_screen->DeleteDC();
 
 	m_bRunning = FALSE;
-}
-
-void CPixelRWDlg::OnBnClickedCancel()
-{
-	// TODO: 在此添加控件通知处理程序代码
-	m_bAbort = TRUE;
-	if (m_bRunning) return;
-	//m_log_file.Close();
-	
-	CDialogEx::OnCancel();
-}
-
-
-void CPixelRWDlg::OnEnChangeEditFileSend()
-{
-	// TODO:  如果该控件是 RICHEDIT 控件，它将不
-	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
-	// 函数并调用 CRichEditCtrl().SetEventMask()，
-	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
-
-	// TODO:  在此添加控件通知处理程序代码
 }

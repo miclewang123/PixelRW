@@ -18,7 +18,7 @@
 // if timeout in wait the last line green, send failed, return -1.
 class CReceiveFile : public CBase{
 public:
-	CReceiveFile(CPixelRWDlg* dlg, CRect& rect, LPCTSTR pctszPrefix = NULL);
+	CReceiveFile(CPixelRWDlg* dlg, LPCTSTR pctszPrefix = NULL);
 	~CReceiveFile();
 
 public:
