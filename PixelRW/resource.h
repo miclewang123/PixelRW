@@ -4,6 +4,8 @@
 //
 #define ID_BTN_SET                      3
 #define ID_BTN_TEST                     4
+#define ID_BTN_TEST2                    5
+#define ID_BTN_EXPAND                   5
 #define IDD_PIXELRW_DIALOG              102
 #define IDR_MAINFRAME                   128
 #define IDC_EDIT_COLOR                  1000

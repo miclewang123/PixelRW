@@ -51,4 +51,5 @@ public:
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedBtnCopy();
 	afx_msg void OnBnClickedBtnPaste();
+	afx_msg void OnBnClickedBtnExpand();
 };

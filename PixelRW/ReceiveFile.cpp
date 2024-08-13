@@ -305,7 +305,7 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 		{	
 			ULONGLONG oldTickcount = GetTickCount64();
 			int64_t oldRemainder = nRemainder;
-
+			UINT nAvgSpeed = 0;
 			do 
 			{
 				if (m_dlg->IsAbort())
@@ -327,7 +327,14 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 					if (nTimeDiff > 1000 || nRemainder == 0)
 					{
 						TCHAR ch[100];
-						_stprintf_s(ch, 100, _T("Speed:%lldKB,remain:%lldKB."), (oldRemainder - nRemainder) / nTimeDiff, nRemainder / 1024);
+						UINT nSpeed = (oldRemainder - nRemainder) / nTimeDiff;
+						if (nAvgSpeed == 0) 
+							nAvgSpeed = nSpeed;
+						else
+							nAvgSpeed = (nAvgSpeed * 10 + nSpeed) / 11;
+						
+						UINT nRemainderTime = (nRemainder / 1024) / nAvgSpeed;
+						_stprintf_s(ch, 100, _T("Speed:%lldKB,remain:%lldKB,need:%dMins"), nAvgSpeed, nRemainder / 1024, nRemainderTime / 60);
 						oldTickcount = GetTickCount64();
 						oldRemainder = nRemainder;
 						m_dlg->DisplaySpeed(ch);

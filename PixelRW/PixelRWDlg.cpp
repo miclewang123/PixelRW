@@ -45,6 +45,7 @@ BEGIN_MESSAGE_MAP(CPixelRWDlg, CDialogEx)
 	ON_BN_CLICKED(IDCANCEL, &CPixelRWDlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDC_BTN_SEND_COPY, &CPixelRWDlg::OnBnClickedBtnCopy)
 	ON_BN_CLICKED(IDC_BTN_RECEIVE_COPY, &CPixelRWDlg::OnBnClickedBtnPaste)
+	ON_BN_CLICKED(ID_BTN_EXPAND, &CPixelRWDlg::OnBnClickedBtnExpand)
 END_MESSAGE_MAP()
 
 // CPixelRWDlg 消息处理程序
@@ -58,10 +59,10 @@ BOOL CPixelRWDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	SetDlgItemInt(IDC_EDIT_X, 100, FALSE);
-	SetDlgItemInt(IDC_EDIT_Y, 100, FALSE);
-	SetDlgItemInt(IDC_EDIT_WIDTH, 32, FALSE);
-	SetDlgItemInt(IDC_EDIT_HEIGHT, 22, FALSE);
+	SetDlgItemInt(IDC_EDIT_X, 1, FALSE);
+	SetDlgItemInt(IDC_EDIT_Y, 1, FALSE);
+	SetDlgItemInt(IDC_EDIT_WIDTH, 1200, FALSE);
+	SetDlgItemInt(IDC_EDIT_HEIGHT, 8, FALSE);
 
 	SetDlgItemText(IDC_EDIT_PREFIX, _T("A"));
 	SetDlgItemText(IDC_EDIT_FILE_SEND, _T("d:\\aaa.zip"));
@@ -220,11 +221,11 @@ BOOL CPixelRWDlg::IsAbort()
 	return m_bAbort;
 }
 
-#define LOG_SIZE 40*40*4*3+1000
+#define LOG_SIZE 1000
 
 void CPixelRWDlg::Log(LPCTSTR strFormat, ...)
 {
-	TCHAR *buf=new TCHAR[LOG_SIZE];
+	TCHAR buf[LOG_SIZE];
 	va_list args;
 	va_start(args, strFormat);
 	_vstprintf(buf, LOG_SIZE, strFormat, args);
@@ -263,8 +264,6 @@ void CPixelRWDlg::Log(LPCTSTR strFormat, ...)
 
 		oldStr = str;
 	}
-
-	delete[] buf;
 }
 
 void CPixelRWDlg::SetReceiveFile(LPCTSTR strFileName)
@@ -566,4 +565,16 @@ void CPixelRWDlg::OnBnClickedBtnTest()
 	dc_screen->DeleteDC();
 
 	m_bRunning = FALSE;
+}
+
+
+void CPixelRWDlg::OnBnClickedBtnExpand()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	RECT rc;
+	this->GetWindowRect(&rc);
+	if ((rc.right - rc.left) > 1000)
+		this->MoveWindow(rc.left, rc.top, 610, rc.bottom - rc.top, TRUE);
+	else
+		this->MoveWindow(rc.left, rc.top, 1810, rc.bottom - rc.top, TRUE);
 }
