@@ -59,10 +59,10 @@ BOOL CPixelRWDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	SetDlgItemInt(IDC_EDIT_X, 1, FALSE);
-	SetDlgItemInt(IDC_EDIT_Y, 1, FALSE);
-	SetDlgItemInt(IDC_EDIT_WIDTH, 1200, FALSE);
-	SetDlgItemInt(IDC_EDIT_HEIGHT, 8, FALSE);
+	SetDlgItemInt(IDC_EDIT_X, 0, FALSE);
+	SetDlgItemInt(IDC_EDIT_Y, 0, FALSE);
+	SetDlgItemInt(IDC_EDIT_WIDTH, 2000, FALSE);
+	SetDlgItemInt(IDC_EDIT_HEIGHT, 9, FALSE);
 
 	SetDlgItemText(IDC_EDIT_PREFIX, _T("A"));
 	SetDlgItemText(IDC_EDIT_FILE_SEND, _T("d:\\aaa.zip"));
@@ -576,5 +576,5 @@ void CPixelRWDlg::OnBnClickedBtnExpand()
 	if ((rc.right - rc.left) > 1000)
 		this->MoveWindow(rc.left, rc.top, 610, rc.bottom - rc.top, TRUE);
 	else
-		this->MoveWindow(rc.left, rc.top, 1810, rc.bottom - rc.top, TRUE);
+		this->MoveWindow(rc.left, rc.top, 2000, rc.bottom - rc.top, TRUE);
 }

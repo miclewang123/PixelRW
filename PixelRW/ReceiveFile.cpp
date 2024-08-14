@@ -334,7 +334,7 @@ int CReceiveFile::ReceiveFile(LPCTSTR pctszFileName)
 							nAvgSpeed = (nAvgSpeed * 10 + nSpeed) / 11;
 						
 						UINT nRemainderTime = (nRemainder / 1024) / nAvgSpeed;
-						_stprintf_s(ch, 100, _T("Speed:%lldKB,remain:%lldKB,need:%dMins"), nAvgSpeed, nRemainder / 1024, nRemainderTime / 60);
+						_stprintf_s(ch, 100, _T("Speed:%lldKB,remain:%lldKB,need:%.2fMins"), nAvgSpeed, nRemainder / 1024, nRemainderTime / 60.0);
 						oldTickcount = GetTickCount64();
 						oldRemainder = nRemainder;
 						m_dlg->DisplaySpeed(ch);
